@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.4
+# v0.15.0
 
 using Markdown
 using InteractiveUtils
@@ -12,9 +12,6 @@ macro bind(def, element)
         el
     end
 end
-
-# ╔═╡ 285809d3-9a72-4eb6-9ebc-ddefd459ab6a
-using HypertextLiteral
 
 # ╔═╡ ab02837b-79ec-40d7-bff1-c1d2dd7362ef
 md"""
@@ -52,8 +49,11 @@ is_good_boy(x) = true;
 
 # ╔═╡ ec1fd70a-d92a-4688-98b2-135879f07141
 md"""
-### (You need `Pluto#main` to run this notebook)
+### (You need `Pluto ≥ 0.14.5` to run this notebook)
 """
+
+# ╔═╡ 80b2fb3f-94b2-4024-94ff-d111a249c8b0
+
 
 # ╔═╡ 9d49ea50-8158-4d8b-97af-edba1f7dc38b
 x = [1,3]
@@ -205,25 +205,6 @@ p-frame-controls {
 }
 """
 
-# ╔═╡ b16145b1-66da-4d96-a648-9e083c407e9a
-# using PlutoUI
-
-# ╔═╡ 80b2fb3f-94b2-4024-94ff-d111a249c8b0
-import Test
-
-# ╔═╡ 05f42764-acfe-4370-b85b-ce0e7c4270d0
-begin
-	export @test_nowarn, @test_warn, @test_logs, @test_skip, @test_broken, @test_throws, @test_deprecated
-	
-	var"@test_warn" = Test.var"@test_warn"
-	var"@test_nowarn" = Test.var"@test_nowarn"
-	var"@test_logs" = Test.var"@test_logs"
-	var"@test_skip" = Test.var"@test_skip"
-	var"@test_broken" = Test.var"@test_broken"
-	var"@test_throws" = Test.var"@test_throws"
-	var"@test_deprecated" = Test.var"@test_deprecated"
-end
-
 # ╔═╡ 0d70962a-3880-4dee-a439-35068d019f5a
 md"""
 # Type definitions
@@ -320,12 +301,6 @@ flatmap(args...) = vcat(map(args...)...)
 
 # ╔═╡ 98ac4c36-49c7-4f65-982d-0b8bf6c372c0
 emb = embed_display
-
-# ╔═╡ 0fcc6cb0-2711-4609-9bf3-634cf9407840
-div(x; class="", style="") = @htl("<div class=$(class) style=$(style)>$(x)</div>")
-
-# ╔═╡ 69200d7c-b7bc-4c7e-a9a1-5e26979179a3
-div(; class="", style="") = x -> @htl("<div class=$(class) style=$(style)>$(x)</div>")
 
 # ╔═╡ 4d5f44e4-85e9-4985-9b76-73be5e097186
 remove_linenums(e::Expr) = if e.head === :macrocall
@@ -513,38 +488,6 @@ function step_by_step(expr; __module__)
 	end
 end
 
-# ╔═╡ b6e8a170-12cc-4d97-905d-274e2609bfd8
-function test(expr, extra_args...; __module__)
-	step_by_step
-	Test.test_expr!("", expr, extra_args...)
-		
-	quote
-		expr_raw = $(QuoteNode(expr))
-		try
-			# steps = @eval_step_by_step($(expr))
-			
-			steps = $(step_by_step(expr; __module__=__module__))
-			
-# 			arg_results = [$((expr.args[2:end] .|> esc)...)]
-			
-# 			result = $(esc(:eval))(Expr(:call, $(expr.args[1] |> QuoteNode), arg_results...))
-			
-			result = unwrap_computed(last(steps))
-			
-			if result === true
-				CorrectCall(expr_raw, steps)
-			# elseif result === false
-			# 	WrongCall(expr_raw, steps)
-			else
-				WrongCall(expr_raw, steps)
-			end
-		catch e
-			rethrow(e)
-			# Error(expr_raw, e)
-		end
-	end
-end
-
 # ╔═╡ a661e172-6afb-42ff-bd43-bb5b787ee5ed
 macro eval_step_by_step(e)
 	step_by_step(e; __module__=__module__)
@@ -603,9 +546,6 @@ We use `print` to turn the expression into source code.
 For each line, we regex-search for slot variables, and we split the line around those. The code segments around slots are rendered inside `<pre-ish>` tags (like `<pre>` but inline), and the slots are replaced by [embedded displays](https://github.com/fonsp/Pluto.jl/pull/1126) of the objects.
 """
 
-# ╔═╡ 872b4877-30dd-4a92-a3c8-69eb50675dcb
-preish(x) = @htl("<pre-ish>$(x)</pre-ish>")
-
 # ╔═╡ c877c109-db16-468c-8f3c-8294db859d6d
 begin
 	struct SlottedDisplay
@@ -614,6 +554,130 @@ begin
 	end
 	SlottedDisplay(expr) = SlottedDisplay(slot(expr)...)
 end
+
+# ╔═╡ 8480d0d7-bdf7-468d-9344-5b789e33921c
+const slotted_code_css = """
+slotted-code {
+	font-family: "JuliaMono", monospace;
+	font-size: .75rem;
+	display: flex;
+	flex-direction: column;
+}
+pre-ish {
+	white-space: pre;
+}
+
+line-like {
+	display: flex;
+	align-items: baseline;
+}
+"""
+
+# ╔═╡ b5763c10-e11c-4389-b6fc-421d2c9682f1
+md"""
+#### Frame viewer
+
+A widget that takes a series of elements and displays them as 'video frames' with a timeline scrubber.
+"""
+
+# ╔═╡ 3d5abd58-02ab-4b91-a7a3-d9068d4df017
+md"""
+#### Macro to test frames
+"""
+
+# ╔═╡ 34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
+
+
+# ╔═╡ f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
+md"""
+# Appendix
+"""
+
+# ╔═╡ 35f63c4e-3583-4ea8-a057-31f18f8a09d6
+md"""
+## DisplayOnly
+"""
+
+# ╔═╡ 35b2770e-1db6-4327-bf86-c27a4b61dbd3
+function is_inside_pluto(m::Module)::Bool
+	if isdefined(m, :PlutoForceDisplay)
+		return m.PlutoForceDisplay
+	else
+		isdefined(m, :PlutoRunner) && parentmodule(m) === Main
+	end
+end
+
+# ╔═╡ 22640a2f-ea38-4517-a4f3-7a65e60ffebe
+"""
+	@displayonly expression
+
+Marks a expression as Pluto-only, which means that it won't be executed when running outside Pluto. Do not use this for your own projects.
+"""
+macro skip_as_script(ex) is_inside_pluto(__module__) ? esc(ex) : nothing end
+
+# ╔═╡ cf314b21-3f4f-4637-b1ce-ec1d5d5af966
+begin
+	@skip_as_script begin
+		import Pkg
+		Pkg.activate("..")
+	end
+	import HypertextLiteral: @htl
+	import Test
+end
+
+# ╔═╡ 05f42764-acfe-4370-b85b-ce0e7c4270d0
+begin
+	export @test_nowarn, @test_warn, @test_logs, @test_skip, @test_broken, @test_throws, @test_deprecated
+	
+	var"@test_warn" = Test.var"@test_warn"
+	var"@test_nowarn" = Test.var"@test_nowarn"
+	var"@test_logs" = Test.var"@test_logs"
+	var"@test_skip" = Test.var"@test_skip"
+	var"@test_broken" = Test.var"@test_broken"
+	var"@test_throws" = Test.var"@test_throws"
+	var"@test_deprecated" = Test.var"@test_deprecated"
+end
+
+# ╔═╡ b6e8a170-12cc-4d97-905d-274e2609bfd8
+function test(expr, extra_args...; __module__)
+	step_by_step
+	Test.test_expr!("", expr, extra_args...)
+		
+	quote
+		expr_raw = $(QuoteNode(expr))
+		try
+			# steps = @eval_step_by_step($(expr))
+			
+			steps = $(step_by_step(expr; __module__=__module__))
+			
+# 			arg_results = [$((expr.args[2:end] .|> esc)...)]
+			
+# 			result = $(esc(:eval))(Expr(:call, $(expr.args[1] |> QuoteNode), arg_results...))
+			
+			result = unwrap_computed(last(steps))
+			
+			if result === true
+				CorrectCall(expr_raw, steps)
+			# elseif result === false
+			# 	WrongCall(expr_raw, steps)
+			else
+				WrongCall(expr_raw, steps)
+			end
+		catch e
+			rethrow(e)
+			# Error(expr_raw, e)
+		end
+	end
+end
+
+# ╔═╡ 0fcc6cb0-2711-4609-9bf3-634cf9407840
+div(x; class="", style="") = @htl("<div class=$(class) style=$(style)>$(x)</div>")
+
+# ╔═╡ 69200d7c-b7bc-4c7e-a9a1-5e26979179a3
+div(; class="", style="") = x -> @htl("<div class=$(class) style=$(style)>$(x)</div>")
+
+# ╔═╡ 872b4877-30dd-4a92-a3c8-69eb50675dcb
+preish(x) = @htl("<pre-ish>$(x)</pre-ish>")
 
 # ╔═╡ ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
 function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
@@ -647,31 +711,6 @@ function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
 		</slotted-code>""")
 	show(io, m, h)
 end
-
-# ╔═╡ 8480d0d7-bdf7-468d-9344-5b789e33921c
-const slotted_code_css = """
-slotted-code {
-	font-family: "JuliaMono", monospace;
-	font-size: .75rem;
-	display: flex;
-	flex-direction: column;
-}
-pre-ish {
-	white-space: pre;
-}
-
-line-like {
-	display: flex;
-	align-items: baseline;
-}
-"""
-
-# ╔═╡ b5763c10-e11c-4389-b6fc-421d2c9682f1
-md"""
-#### Frame viewer
-
-A widget that takes a series of elements and displays them as 'video frames' with a timeline scrubber.
-"""
 
 # ╔═╡ e968fc57-d850-4e2d-9410-8777d03b7b3c
 function frames(fs::Vector)
@@ -722,11 +761,6 @@ function frames(fs::Vector)
 	
 end
 
-# ╔═╡ 3d5abd58-02ab-4b91-a7a3-d9068d4df017
-md"""
-#### Macro to test frames
-"""
-
 # ╔═╡ 326f7661-3482-4bf2-a97b-57cc7ac60ee2
 macro visual_debug(expr)
 	frames
@@ -736,36 +770,6 @@ macro visual_debug(expr)
 		@eval_step_by_step($(expr)) .|> SlottedDisplay |> frames
 	end
 end
-
-# ╔═╡ 34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
-
-
-# ╔═╡ f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
-md"""
-# Appendix
-"""
-
-# ╔═╡ 35f63c4e-3583-4ea8-a057-31f18f8a09d6
-md"""
-## DisplayOnly
-"""
-
-# ╔═╡ 35b2770e-1db6-4327-bf86-c27a4b61dbd3
-function is_inside_pluto(m::Module)::Bool
-	if isdefined(m, :PlutoForceDisplay)
-		return m.PlutoForceDisplay
-	else
-		isdefined(m, :PlutoRunner) && parentmodule(m) === Main
-	end
-end
-
-# ╔═╡ 22640a2f-ea38-4517-a4f3-7a65e60ffebe
-"""
-	@displayonly expression
-
-Marks a expression as Pluto-only, which means that it won't be executed when running outside Pluto. Do not use this for your own projects.
-"""
-macro skip_as_script(ex) is_inside_pluto(__module__) ? esc(ex) : nothing end
 
 # ╔═╡ 69bfb438-7ecf-4f9b-8bc4-51e07aa46ef1
 @skip_as_script Core.eval(Module(), ex1)
@@ -1333,6 +1337,8 @@ embed_display(@test false)
 # ╟─5b70aaf1-9623-4f55-b055-4263ed8be31d
 # ╟─fd8428a3-9fa3-471a-8b2d-5bbb8fdb3137
 # ╟─ec1fd70a-d92a-4688-98b2-135879f07141
+# ╠═cf314b21-3f4f-4637-b1ce-ec1d5d5af966
+# ╠═80b2fb3f-94b2-4024-94ff-d111a249c8b0
 # ╠═c763ed72-82c9-445c-a8f7-a0c40982e4d9
 # ╠═9d49ea50-8158-4d8b-97af-edba1f7dc38b
 # ╠═eab4ba31-c787-46dd-8024-693eca7fd1a0
@@ -1359,9 +1365,6 @@ embed_display(@test false)
 # ╠═1aa24b1c-e8ca-4de7-b614-7a3f02b4833d
 # ╠═8a2e8348-49cf-4855-b5b3-cdee33e5ed67
 # ╠═42671258-07a0-4015-8f47-4b3032595f08
-# ╠═285809d3-9a72-4eb6-9ebc-ddefd459ab6a
-# ╠═b16145b1-66da-4d96-a648-9e083c407e9a
-# ╠═80b2fb3f-94b2-4024-94ff-d111a249c8b0
 # ╠═05f42764-acfe-4370-b85b-ce0e7c4270d0
 # ╟─0d70962a-3880-4dee-a439-35068d019f5a
 # ╠═113cc425-e224-4f77-bfbd-ef4eb1d1ed70

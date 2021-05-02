@@ -177,6 +177,10 @@ border-radius: 7px;
 /* expanding */
 
 
+.pluto-test:not(.expanded) {
+	cursor: pointer;
+}
+
 .pluto-test:not(.expanded) > p-frame-viewer > p-frame-controls {
 	display: none;
 	
@@ -835,7 +839,7 @@ const toc_css = """
 		/* That is, viewport minus top minus Live Docs */
 		max-height: calc(100vh - 5rem - 56px);
 		overflow: auto;
-		z-index: 5;
+		z-index: 50;
 		background: white;
 	}
 }

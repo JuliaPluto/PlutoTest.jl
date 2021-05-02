@@ -1,4 +1,4 @@
-# PlutoTest.jl
+# PlutoTest.jl _(alpha release)_
 _Visual, reactive testing library for Julia_
 
 The PlutoTest.jl package provides a macro `@test` that you can use to verify your code's correctness. **But instead of just showing _"Pass"_ or _"Fail"_, it uses ✨ *time travel* ✨ to tell you _why_ your test failed.**
@@ -18,6 +18,7 @@ julia> using PlutoTest
 julia> @test 1 + 1 == 2
 ```
 
+This package is still an _alpha release_, don't use it to `@test is_safe(crazy_new_bike_design)`.
 
 # Reactive
 

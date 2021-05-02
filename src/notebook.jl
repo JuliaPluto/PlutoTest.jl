@@ -620,6 +620,7 @@ begin
 	@skip_as_script begin
 		import Pkg
 		Pkg.activate("..")
+		Pkg.instantiate()
 	end
 	import HypertextLiteral: @htl
 	import Test

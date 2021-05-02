@@ -36,6 +36,8 @@ When a test gets re-run and it fails outside of your viewport, you will be notif
 
 ![](https://user-images.githubusercontent.com/6933510/116827278-74ed0080-ab98-11eb-89be-f808429ed942.gif)
 
+_(Only enabled on Chrome and Firefox for now.)_
+
 # Future: GitHub Action
 
 In the future, it will be easy to run Pluto-based, PlutoTest-based tests automatically on GitHub Actions or Travis CI. In addition to running your tests, it will **upload a rendered notebook** as artifact to the test run ([sample](https://juliapluto.github.io/PlutoTest.jl/src/notebook.html)). If a test failed, you can open the notebook and see why.

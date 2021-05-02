@@ -1,7 +1,10 @@
 # PlutoTest.jl _(alpha release)_
-_Visual, reactive testing library for Julia_
 
-The PlutoTest.jl package provides a macro `@test` that you can use to verify your code's correctness. **But instead of just showing _"Pass"_ or _"Fail"_, it uses ✨ *time travel* ✨ to tell you _why_ your test failed.**
+> _Visual, reactive testing library for Julia_
+
+A macro `@test` that you can use to verify your code's correctness. 
+
+**But instead of just saying _"Pass"_ or _"Fail"_, it uses ✨ *time travel* ✨ to show you _why_ your test failed.**
 
 ![Demo screencap](https://user-images.githubusercontent.com/6933510/116827035-60f4cf00-ab97-11eb-9dd9-631426e435af.gif)
 
@@ -33,3 +36,7 @@ When a test gets re-run and it fails outside of your viewport, you will be notif
 # Future: GitHub Action
 
 In the future, it will be easy to run Pluto-based, PlutoTest-based tests automatically on GitHub Actions or Travis CI. In addition to running your tests, it will **upload a rendered notebook** as artifact to the test run. If a test failed, you can open the notebook and see why.
+
+# How does it work?
+
+Take a look at the source code! (It's a Pluto notebook 🌝)

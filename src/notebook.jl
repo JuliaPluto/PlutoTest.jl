@@ -15,37 +15,31 @@ end
 
 # ╔═╡ ab02837b-79ec-40d7-bff1-c1d2dd7362ef
 md"""
-# PlutoTest.jl
+> # PlutoTest.jl
+> 
+> _Visual, reactive testing library for Julia_
+
+A macro `@test` that you can use to verify your code's correctness. 
+
+**But instead of just saying _"Pass"_ or _"Fail"_, let's try to show you _why_ a test failed.**
+- ✨ _time travel_ ✨ to replay the execution step-by-step
+- ⭐️ _multimedia display_ ⭐️ to make results easy to read
 """
-
-# ╔═╡ 5b801f8b-1320-4208-8819-571d0a6c8c36
-md"""
-This notebook introduces **visual testing**:
-"""
-
-# ╔═╡ c19b881b-24de-4628-8adc-4b1635dba543
-
-
-# ╔═╡ 779a7207-c508-4764-89b0-bfae44d0765c
-
 
 # ╔═╡ 56347b7e-5007-45f8-8f6d-8ac8cc719637
 md"""
 Tests have _time-travel_ functionality built in! **Click on the tests above.**
 """
 
-# ╔═╡ e5782dab-711b-4386-bc6a-8b2853b3f868
-md"""
-### Time travel
-"""
-
-# ╔═╡ 85c4575f-8466-4a42-a7b5-1b3346f60e38
-md"""
-This notebook contains **visual debugging**:
-"""
-
 # ╔═╡ fd8428a3-9fa3-471a-8b2d-5bbb8fdb3137
 is_good_boy(x) = true;
+
+# ╔═╡ 191f1f04-18d4-485b-af8b-a2f073b7043b
+md"""
+## Installation and more info
+
+> [github.com/JuliaPluto/PlutoTest.jl](https://github.com/JuliaPluto/PlutoTest.jl)
+"""
 
 # ╔═╡ ec1fd70a-d92a-4688-98b2-135879f07141
 md"""
@@ -1069,15 +1063,6 @@ end;
 # ╔═╡ 6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
 plot(args...; kwargs...) = Hannes
 
-# ╔═╡ d6c53f95-ea61-4aed-a469-76d0319d29de
-@visual_debug begin
-	(1+2) + (7-6)
-	plot(2000 .+ 30 .* rand(2+2))
-	4+5
-	sqrt(sqrt(sqrt(5)))
-	md"# Wow"
-end
-
 # ╔═╡ b4b317d7-bed1-489c-9650-8d336e330689
 rs = @eval_step_by_step(begin
 		(1+2) + (7-6)
@@ -1101,6 +1086,7 @@ frames(rs)
 	plot(2000 .+ 30 .* rand(2+2))
 	4+5
 	sqrt(sqrt(sqrt(5)))
+	md"# Wow"
 end
 
 # ╔═╡ 5b70aaf1-9623-4f55-b055-4263ed8be31d
@@ -1326,21 +1312,16 @@ embed_display(@test false)
 
 # ╔═╡ Cell order:
 # ╟─ab02837b-79ec-40d7-bff1-c1d2dd7362ef
-# ╟─5b801f8b-1320-4208-8819-571d0a6c8c36
 # ╠═73d74146-8f60-4388-aaba-0dfe4215cb5d
 # ╠═71b22e76-2b50-4d16-85f6-9dad0415630e
 # ╠═6762ed72-f422-43a9-a782-de78f739c0ae
-# ╟─c19b881b-24de-4628-8adc-4b1635dba543
-# ╟─779a7207-c508-4764-89b0-bfae44d0765c
 # ╠═f77275b9-90aa-4e07-a608-981b5df727af
 # ╟─56347b7e-5007-45f8-8f6d-8ac8cc719637
-# ╟─e5782dab-711b-4386-bc6a-8b2853b3f868
-# ╟─85c4575f-8466-4a42-a7b5-1b3346f60e38
-# ╠═d6c53f95-ea61-4aed-a469-76d0319d29de
 # ╟─bf2abe01-6ae0-4066-8704-12f64e04511b
 # ╟─e46cf3e0-aa15-4c17-a925-3e9fc5109d54
 # ╟─5b70aaf1-9623-4f55-b055-4263ed8be31d
 # ╟─fd8428a3-9fa3-471a-8b2d-5bbb8fdb3137
+# ╟─191f1f04-18d4-485b-af8b-a2f073b7043b
 # ╟─ec1fd70a-d92a-4688-98b2-135879f07141
 # ╠═cf314b21-3f4f-4637-b1ce-ec1d5d5af966
 # ╠═80b2fb3f-94b2-4024-94ff-d111a249c8b0

@@ -2,9 +2,11 @@
 
 > _Visual, reactive testing library for Julia_
 
-A macro `@test` that you can use to verify your code's correctness. 
+A macro `@test` that you can use to verify your code's correctness.
 
-**But instead of just saying _"Pass"_ or _"Fail"_, it uses ✨ *time travel* ✨ to show you _why_ your test failed.**
+**But instead of just saying _"Pass"_ or _"Fail"_, let's try to show you _why_ a test failed.**
+-   ✨ _time travel_ ✨ to replay the execution step-by-step
+-   ⭐️ _multimedia display_ ⭐️ to make results easy to read
 
 ![Demo screencap](https://user-images.githubusercontent.com/6933510/116827035-60f4cf00-ab97-11eb-9dd9-631426e435af.gif)
 

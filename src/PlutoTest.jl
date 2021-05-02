@@ -1,5 +1,5 @@
 module PlutoTest
 
-greet() = print("Hello World!")
+include("./notebook.jl")
 
-end # module
+end

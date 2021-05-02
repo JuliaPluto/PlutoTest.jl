@@ -8,6 +8,7 @@ A macro `@test` that you can use to verify your code's correctness.
 
 ![Demo screencap](https://user-images.githubusercontent.com/6933510/116827035-60f4cf00-ab97-11eb-9dd9-631426e435af.gif)
 
+[Try this demo in your browser[(https://juliapluto.github.io/PlutoTest.jl/src/notebook.html)
 
 # Install & use
 
@@ -35,8 +36,8 @@ When a test gets re-run and it fails outside of your viewport, you will be notif
 
 # Future: GitHub Action
 
-In the future, it will be easy to run Pluto-based, PlutoTest-based tests automatically on GitHub Actions or Travis CI. In addition to running your tests, it will **upload a rendered notebook** as artifact to the test run. If a test failed, you can open the notebook and see why.
+In the future, it will be easy to run Pluto-based, PlutoTest-based tests automatically on GitHub Actions or Travis CI. In addition to running your tests, it will **upload a rendered notebook** as artifact to the test run ([sample](https://juliapluto.github.io/PlutoTest.jl/src/notebook.html)). If a test failed, you can open the notebook and see why.
 
 # How does it work?
 
-Take a look at the source code! (It's a Pluto notebook 🌝)
+Take a look at the [source code](https://juliapluto.github.io/PlutoTest.jl/src/notebook.html)! (It's a Pluto notebook 🌝)

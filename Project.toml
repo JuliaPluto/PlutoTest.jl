@@ -1,0 +1,4 @@
+name = "PlutoTest"
+uuid = "cb4044da-4d16-4ffa-a6a3-8cad7f73ebdc"
+authors = ["Fons van der Plas <fonsvdplas@gmail.com>"]
+version = "0.1.0"

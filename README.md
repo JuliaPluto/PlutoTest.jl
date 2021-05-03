@@ -10,7 +10,7 @@ A macro `@test` that you can use to verify your code's correctness.
 
 ![Demo screencap](https://user-images.githubusercontent.com/6933510/116827035-60f4cf00-ab97-11eb-9dd9-631426e435af.gif)
 
-[Try this demo in your browser[(https://juliapluto.github.io/PlutoTest.jl/src/notebook.html)
+[Try this demo in your browser](https://juliapluto.github.io/PlutoTest.jl/src/notebook.html)
 
 # Install & use
 

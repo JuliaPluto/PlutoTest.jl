@@ -28,7 +28,7 @@ A macro `@test` that you can use to verify your code's correctness.
 
 # ╔═╡ 56347b7e-5007-45f8-8f6d-8ac8cc719637
 md"""
-Tests have _time-travel_ functionality built in! **Click on the tests above.**
+Tests have _time-travel_ functionality built in! **Click on the test results above.**
 """
 
 # ╔═╡ fd8428a3-9fa3-471a-8b2d-5bbb8fdb3137
@@ -74,7 +74,7 @@ pt-dot.floating {
 	position: fixed;
 	z-index: 60;
 	visibility: hidden;
-	transition: transform linear 120ms;
+	transition: transform linear 240ms;
 	opacity: .8;
 }
 .show-top-float > pt-dot.floating.top,
@@ -189,7 +189,7 @@ border-radius: 7px;
 .pluto-test.expanded > p-frame-viewer > p-frames > slotted-code > line-like > pluto-display[mime="application/vnd.pluto.tree+object"] {
 	/*flex-basis: 100%;*/
 }
-"""
+""";
 
 # ╔═╡ 42671258-07a0-4015-8f47-4b3032595f08
 const frames_css = """
@@ -201,7 +201,7 @@ p-frames,
 p-frame-controls {
 	display: inline-flex;
 }
-"""
+""";
 
 # ╔═╡ 0d70962a-3880-4dee-a439-35068d019f5a
 md"""
@@ -724,7 +724,7 @@ function frames(fs::Vector)
 		</p-frames>
 		
 		<p-frame-controls>
-		<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.0.0/src/svg/time-outline.svg" style="width: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
+		<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.0.0/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
 		<input class="timescrub" style="filter: hue-rotate(149deg) grayscale(.9);" type=range min=1 max=$(l) value=$(startframe)>
 		</p-frame-controls>
 		
@@ -1155,10 +1155,17 @@ begin
 			const dot = div.querySelector("pt-dot")
 			const dot_top = div.querySelector("pt-dot.top")
 			const dot_bot = div.querySelector("pt-dot.bottom")
+			
+			const is_chrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
+			const is_firefox = /Firefox/.test(navigator.userAgent) && /Mozilla/.test(navigator.userAgent)
+			
+			// safari is too slow
+			
+			if(is_chrome || is_firefox){
 
 			const intersect = (r) => {
 				const topdistance = r.top
-				const botdistance = window.visualViewport.height - r.bottom
+				const botdistance = window.innerHeight - r.bottom
 			
 				
 				const t = (x) => `translate(\${2*Math.sqrt(Math.max(0,-50-x))}px,0)`
@@ -1171,9 +1178,11 @@ begin
 			
 			intersect(dot.getBoundingClientRect())
 			
-			window.addEventListener("scroll", throttled(() => {
+			const scroll_listener = throttled(() => {
 				intersect(dot.getBoundingClientRect())
-			}, 100))
+			}, 200)
+			
+			window.addEventListener("scroll", scroll_listener)
 
 			let observer = new IntersectionObserver((es) => {
 				const e = es[0]
@@ -1185,12 +1194,15 @@ begin
 
 			observer.observe(dot)
 			invalidation.then(() => {
+				window.removeEventListener("scroll", scroll_listener)
 				observer.unobserve(dot)
 			})
 			
 			Array.from(div.querySelectorAll("pt-dot.floating")).forEach(e => {
 				e.addEventListener("click", () => dot.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"}))
 			})
+			
+			}
 			
 			</script>
 			<pt-dot></pt-dot>

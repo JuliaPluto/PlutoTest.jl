@@ -14,7 +14,7 @@ A macro `@test` that you can use to verify your code's correctness.
 
 # Install & use
 
-First, update Pluto to at least `0.14.5`!
+First, update Pluto to at least `0.14.5`! Next, add this package like so:
 
 ```julia
 julia> import Pkg; Pkg.add(Pkg.PackageSpec(url="https://github.com/JuliaPluto/PlutoTest.jl"))

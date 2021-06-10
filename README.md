@@ -17,7 +17,13 @@ A macro `@test` that you can use to verify your code's correctness. **But instea
 First, update Pluto to at least `0.14.5`! Next, add this package like so:
 
 ```julia
-julia> import Pkg; Pkg.add(Pkg.PackageSpec(url="https://github.com/JuliaPluto/PlutoTest.jl"))
+julia> begin
+           import Pkg
+           Pkg.activate(mktempdir())
+           Pkg.add([
+               Pkg.PackageSpec(url="https://github.com/JuliaPluto/PlutoTest.jl")
+           ])
+       end
 
 julia> using PlutoTest
 

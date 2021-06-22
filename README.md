@@ -14,17 +14,21 @@ A macro `@test` that you can use to verify your code's correctness. **But instea
 
 # Install & use
 
-First, update Pluto to at least `0.14.5`! Next, add this package like so:
+First, update Pluto to at least `0.14.5`! Next, add this package like so: _(you can skip this step in Pluto 0.15 and above)_
 
 ```julia
 julia> begin
            import Pkg
            Pkg.activate(mktempdir())
            Pkg.add([
-               Pkg.PackageSpec(url="https://github.com/JuliaPluto/PlutoTest.jl")
+               Pkg.PackageSpec(name="PlutoTest")
            ])
        end
+```
 
+Inside your notebook, use the `@test` macro to test whether something returns `true`:
+
+```julia
 julia> using PlutoTest
 
 julia> @test 1 + 1 == 2

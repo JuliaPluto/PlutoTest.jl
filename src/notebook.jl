@@ -322,7 +322,7 @@ expr_hash(x) = objectid(x)
 
 # ╔═╡ dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 md"""
-# $(html"<img src='https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.0.0/src/svg/time-outline.svg' style='height: .75em; margin-bottom: -.1em'>") _Time travel_ evaluation
+# $(html"<img src='https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg' style='height: .75em; margin-bottom: -.1em'>") _Time travel_ evaluation
 
 In Julia, expressions are objects! This means that, before evaluation, code is expressed as a Julia object:
 """
@@ -724,7 +724,7 @@ function frames(fs::Vector)
 		</p-frames>
 		
 		<p-frame-controls>
-		<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.0.0/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
+		<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
 		<input class="timescrub" style="filter: hue-rotate(149deg) grayscale(.9);" type=range min=1 max=$(l) value=$(startframe)>
 		</p-frame-controls>
 		

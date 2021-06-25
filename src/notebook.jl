@@ -287,11 +287,11 @@ md"""
 # @test (@test t isa Pass) isa Pass
 
 # ╔═╡ ec2ed42c-1227-4e0d-b642-20e6f3503d2a
-embed_display = if isdefined(Main, :PlutoRunner) && isdefined(Main.PlutoRunner, :embed_display)
+embed_display(x) = if isdefined(Main, :PlutoRunner) && isdefined(Main.PlutoRunner, :embed_display)
 	# if this package is used inside Pluto, and Pluto is new enough
-	Main.PlutoRunner.embed_display
+	Main.PlutoRunner.embed_display(x)
 else
-	identity
+	identity(x)
 end
 
 # ╔═╡ 1ac164c8-88fc-4a87-a194-60ef616fb399
@@ -690,7 +690,7 @@ function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
 	lines = split(s, "\n")
 	
 	r = r"\_\_slot[a-z]{16}\_\_"
-	
+	embed_display
 	h = @htl("""<slotted-code>
 		$(
 	map(lines) do l
@@ -760,13 +760,22 @@ function frames(fs::Vector)
 	
 end
 
+# ╔═╡ b273d3d3-648f-4d34-94e7-e49277d4ba29
+with_slotted_css(x) = @htl("""
+	$(x)
+	<style>
+	$(slotted_code_css)
+	</style>
+	""")
+
 # ╔═╡ 326f7661-3482-4bf2-a97b-57cc7ac60ee2
 macro visual_debug(expr)
 	frames
 	SlottedDisplay
 	var"@eval_step_by_step"
+	with_slotted_css
 	quote
-		@eval_step_by_step($(expr)) .|> SlottedDisplay |> frames
+		@eval_step_by_step($(expr)) .|> SlottedDisplay |> frames |> with_slotted_css
 	end
 end
 
@@ -1459,6 +1468,7 @@ embed_display(@test false)
 # ╠═e968fc57-d850-4e2d-9410-8777d03b7b3c
 # ╟─3d5abd58-02ab-4b91-a7a3-d9068d4df017
 # ╠═326f7661-3482-4bf2-a97b-57cc7ac60ee2
+# ╟─b273d3d3-648f-4d34-94e7-e49277d4ba29
 # ╠═a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
 # ╟─34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
 # ╟─f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3

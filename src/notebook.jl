@@ -254,6 +254,27 @@ md"""
 # Test macro
 """
 
+# ╔═╡ b6b1e037-754e-4c9c-a79d-2a1517cb409d
+remove_quotes(ex::Expr) = Expr(if ex.head === :$
+		:block
+	else
+		ex.head
+	end, remove_quotes.(ex.args)...)
+
+# ╔═╡ 8020701d-e23a-4d95-b4ad-ebeddd374fb5
+remove_quotes(x) = x
+
+# ╔═╡ fc1ec730-4e11-452c-94a7-26605a87a89e
+let
+	e = """
+		map(1:15) do i
+			@test 2 * \$i > 0.19
+		end
+	""" |> Meta.parse
+	
+	e, remove_quotes(e)
+end
+
 # ╔═╡ bfe4dc61-9160-4c7e-8897-9c723b309adc
 # function test(expr)
 # 	if Meta.isexpr(expr, :call, 3) && expr.args[1] === :(==)
@@ -488,7 +509,13 @@ end
 
 # ╔═╡ a661e172-6afb-42ff-bd43-bb5b787ee5ed
 macro eval_step_by_step(e)
-	step_by_step(e; __module__=__module__)
+	step_by_step
+	quote
+		if false
+			$(esc(remove_quotes(e)))
+		end
+		$(step_by_step(e; __module__=__module__))
+	end
 end
 
 # ╔═╡ 930f8244-cf25-4c1a-95f6-5c8963559c62
@@ -501,7 +528,11 @@ end
 @eval_step_by_step xasdf = 123
 
 # ╔═╡ 8a5a4c26-e36c-4061-b32f-4448625ce4a6
-xasdf
+try
+	xasdf
+catch e
+	e
+end
 
 # ╔═╡ 21d4560e-721f-4ed4-9db7-86a8151ab22c
 md"""
@@ -643,11 +674,6 @@ function test(expr, extra_args...; __module__)
 	Test.test_expr!("", expr, extra_args...)
 		
 	quote
-		# for pluto to detect
-		if false
-			$(esc(expr))
-		end
-		
 		expr_raw = $(QuoteNode(expr))
 		try
 			# steps = @eval_step_by_step($(expr))
@@ -1118,7 +1144,12 @@ begin
 	export @test
 	
 	macro test(expr...)
-		test(expr...; __module__=__module__)
+		quote
+			if false
+				$(esc(remove_quotes(expr[1])))
+			end
+			$(test(expr...; __module__=__module__))
+		end
 	end
 	
 	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall})
@@ -1390,10 +1421,12 @@ embed_display(@test false)
 # ╠═14c525a1-eca1-466b-8e63-3a90d7d7111c
 # ╟─a2efc968-246c-40c2-b285-2ec94b185a44
 # ╠═c39021dc-157c-4bcb-a3a9-fec8d9286b48
+# ╠═b6b1e037-754e-4c9c-a79d-2a1517cb409d
+# ╠═8020701d-e23a-4d95-b4ad-ebeddd374fb5
+# ╠═fc1ec730-4e11-452c-94a7-26605a87a89e
 # ╠═e1c306e3-0a47-4149-a9fb-ec7ab380fa11
 # ╠═b6e8a170-12cc-4d97-905d-274e2609bfd8
 # ╟─bfe4dc61-9160-4c7e-8897-9c723b309adc
-# ╠═ac02b12a-3982-4526-a51c-0bf85198b81b
 # ╠═bb770f3f-72dd-4a71-8d71-9e773224df05
 # ╠═22a33c8c-e07f-445e-9d8d-a676f704ec45
 # ╠═176f39f1-fa36-4ce1-86ba-76248848a834
@@ -1403,6 +1436,7 @@ embed_display(@test false)
 # ╠═3b2e8f55-1d4b-4a36-83f6-26becbd79e4b
 # ╠═7c1aa057-dff2-48cd-aad5-1bbc1c0a729b
 # ╠═ec2ed42c-1227-4e0d-b642-20e6f3503d2a
+# ╠═ac02b12a-3982-4526-a51c-0bf85198b81b
 # ╠═9c3f6eab-b1c3-4607-add8-d6d7e468c11a
 # ╠═1ac164c8-88fc-4a87-a194-60ef616fb399
 # ╠═98ac4c36-49c7-4f65-982d-0b8bf6c372c0

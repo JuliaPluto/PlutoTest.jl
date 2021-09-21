@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.0
+# v0.16.1
 
 using Markdown
 using InteractiveUtils
@@ -593,7 +593,7 @@ md"""
 
 # ╔═╡ 35f63c4e-3583-4ea8-a057-31f18f8a09d6
 md"""
-## DisplayOnly
+## `@skip_as_script`
 """
 
 # ╔═╡ 35b2770e-1db6-4327-bf86-c27a4b61dbd3
@@ -615,7 +615,7 @@ macro skip_as_script(ex) is_inside_pluto(__module__) ? esc(ex) : nothing end
 
 # ╔═╡ cf314b21-3f4f-4637-b1ce-ec1d5d5af966
 begin
-	@skip_as_script begin
+	if is_inside_pluto(@__MODULE__)
 		import Pkg
 		Pkg.activate("..")
 		Pkg.instantiate()
@@ -643,6 +643,11 @@ function test(expr, extra_args...; __module__)
 	Test.test_expr!("", expr, extra_args...)
 		
 	quote
+		# for pluto to detect
+		if false
+			$(esc(expr))
+		end
+		
 		expr_raw = $(QuoteNode(expr))
 		try
 			# steps = @eval_step_by_step($(expr))
@@ -1472,7 +1477,7 @@ embed_display(@test false)
 # ╠═a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
 # ╟─34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
 # ╟─f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
-# ╠═35f63c4e-3583-4ea8-a057-31f18f8a09d6
+# ╟─35f63c4e-3583-4ea8-a057-31f18f8a09d6
 # ╟─35b2770e-1db6-4327-bf86-c27a4b61dbd3
 # ╟─22640a2f-ea38-4517-a4f3-7a65e60ffebe
 # ╟─d414f840-4952-4de5-a565-7fdc81a94817

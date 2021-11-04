@@ -521,7 +521,7 @@ end
 
 # ╔═╡ 35f63c4e-3583-4ea8-a057-31f18f8a09d6
 md"""
-## DisplayOnly
+## `@skip_as_script`
 """
 
 # ╔═╡ ef59d0f0-0f02-4089-a49d-53fb0427c3a0
@@ -557,7 +557,7 @@ macro skip_as_script(ex) is_inside_pluto(__module__) ? esc(ex) : nothing end
 
 # ╔═╡ cf314b21-3f4f-4637-b1ce-ec1d5d5af966
 begin
-	@skip_as_script begin
+	if is_inside_pluto(@__MODULE__)
 		import Pkg
 		Pkg.activate("..")
 		Pkg.instantiate()

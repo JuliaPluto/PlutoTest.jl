@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.0
+# v0.16.1
 
 using Markdown
 using InteractiveUtils
@@ -302,16 +302,6 @@ flatmap(args...) = vcat(map(args...)...)
 # ╔═╡ 98ac4c36-49c7-4f65-982d-0b8bf6c372c0
 emb = embed_display
 
-# ╔═╡ 4d5f44e4-85e9-4985-9b76-73be5e097186
-remove_linenums(e::Expr) = if e.head === :macrocall
-	Expr(e.head, (remove_linenums(x) for x in e.args)...)
-else
-	Expr(e.head, (remove_linenums(x) for x in e.args if !(x isa LineNumberNode))...)
-end
-
-# ╔═╡ dd495e00-d74d-47d4-a5d5-422fb147ec3b
-remove_linenums(x) = x
-
 # ╔═╡ a83a6a4c-664c-46fa-a07f-81088493dc35
 const ObjectID = typeof(objectid("hello computer"))
 
@@ -361,20 +351,6 @@ Our time travel mechanism will be based on the partial evaluation principle intr
 struct Computed
 	x
 end
-
-# ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
-expr_to_str(e, mod=@__MODULE__()) = let
-	Computed
-	sprint() do io
-		Base.print(IOContext(io, :module => @__MODULE__), remove_linenums(e))
-	end
-end
-
-# ╔═╡ ea73a35e-a34f-4708-acc1-858f2466e9ba
-expr_to_str(:(x+1))
-
-# ╔═╡ ef6fc423-f1b1-4dcb-a059-276121391bc6
-prettycolors(e) = Markdown.MD([Markdown.Code("julia", expr_to_str(e))])
 
 # ╔═╡ f9c81ab1-556c-4d81-bee8-2897c20e324d
 md"""
@@ -591,30 +567,13 @@ function lowered_with_reference_to_expr(e::Expr)::Vector{CodeFrameWithExpr}
 	end
 end
 
-# ╔═╡ 7dc21aa9-252f-4654-95c8-fe297f0d6021
-expand_lowered_to_expr(lowered_with_reference_to_expr(:([1:7...])); expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ 03579ca6-d04b-4ba7-829c-8cf3c3fdbafa
-expand_lowered_to_expr(lowered_with_reference_to_expr(:(sqrt(sqrt(1)))); expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ 3650d813-8a6c-4cd0-bb68-8b384e8211d8
-expand_lowered_to_expr(lowered_with_reference_to_expr(quote
-	@test 1 + 1
-end); expr_ref=:expr_ref) .|> prettycolors
-
 # ╔═╡ bed3d31a-356a-4f9e-9a58-38b511f2b0e7
 lowered_sqrt = lowered_with_reference_to_expr(:(sqrt(sqrt(4)) == 2))
-
-# ╔═╡ 907543c6-b7ed-4521-af21-d6fb86ce4518
-expand_lowered_to_expr(lowered_sqrt; expr_ref=:expr_ref) .|> prettycolors
 
 # ╔═╡ b4e5b2a0-1ccb-4e10-bd5d-a26916568d69
 xxx = lowered_with_reference_to_expr(quote
 	sqrt(sqrt(4)) == 2
 end)
-
-# ╔═╡ 0a7a0d9e-034f-4f36-a57c-34b5d4ca896d
-expand_lowered_to_expr(xxx; expr_ref=:expr_ref) .|> prettycolors
 
 # ╔═╡ ceb2c456-de9b-40a7-ac9f-3ba8d8708c2f
 lowered_with_reference_to_expr(:(4+4 ∈ [1:7...]))
@@ -672,28 +631,8 @@ macro eval_step_by_step(e)
 	step_by_step(e)
 end
 
-# ╔═╡ 3fccae0c-ab69-4bc8-858b-ede886c45e32
-(@eval_step_by_step begin sqrt(sqrt(4)) + 2 end) .|> prettycolors
-
-# ╔═╡ c46d5246-e62f-4f2e-9e3a-0608c8c48b2e
-(@eval_step_by_step begin 4+4 ∈ [1:7...] end) .|> prettycolors
-
-# ╔═╡ d2e1d5ae-2daa-4cf1-8cd9-68bb8c6c81a1
-let
-	executed_count = Ref(0)
-	steps = @eval_step_by_step(begin sqrt(sqrt(increase_counter(16, executed_count))) end) .|> prettycolors
-	
-	(executed_count=executed_count, steps=steps)
-end
-
 # ╔═╡ fe02352b-962a-4ac5-ba40-6b96112235ee
 @eval_step_by_step 1 + 1
-
-# ╔═╡ ba28d507-816f-45c0-b6c0-2f5f4f09855f
-(@eval_step_by_step begin sqrt(sqrt(4)) == 2 end) .|> prettycolors
-
-# ╔═╡ 930f8244-cf25-4c1a-95f6-5c8963559c62
-@macroexpand @eval_step_by_step x == [1,2]
 
 # ╔═╡ 68ba60db-44ad-43e4-b33e-d27696babc99
 @eval_step_by_step sqrt(sqrt(length([1,2])))
@@ -769,6 +708,14 @@ line-like {
 }
 """
 
+# ╔═╡ b4b317d7-bed1-489c-9650-8d336e330689
+rs = @eval_step_by_step(begin
+		(1+2) + (7-6)
+		plot(2000 .+ 30 .* rand(2+2))
+		4+5
+		sqrt(sqrt(sqrt(5)))
+	end) .|> SlottedDisplay
+
 # ╔═╡ b5763c10-e11c-4389-b6fc-421d2c9682f1
 md"""
 #### Frame viewer
@@ -788,6 +735,70 @@ md"""
 md"""
 # Appendix
 """
+
+# ╔═╡ c55ae954-2d1e-4633-91e6-2c303ae40334
+
+
+# ╔═╡ 4d5f44e4-85e9-4985-9b76-73be5e097186
+remove_linenums(e::Expr) = if e.head === :macrocall
+	Expr(e.head, (remove_linenums(x) for x in e.args)...)
+else
+	Expr(e.head, (remove_linenums(x) for x in e.args if !(x isa LineNumberNode))...)
+end
+
+# ╔═╡ dd495e00-d74d-47d4-a5d5-422fb147ec3b
+remove_linenums(x) = x
+
+# ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+expr_to_str(e, mod=@__MODULE__()) = let
+	Computed
+	sprint() do io
+		Base.print(IOContext(io, :module => @__MODULE__), remove_linenums(e))
+	end
+end
+
+# ╔═╡ ea73a35e-a34f-4708-acc1-858f2466e9ba
+expr_to_str(:(x+1))
+
+# ╔═╡ ef6fc423-f1b1-4dcb-a059-276121391bc6
+prettycolors(e) = Markdown.MD([Markdown.Code("julia", expr_to_str(e))])
+
+# ╔═╡ 3fccae0c-ab69-4bc8-858b-ede886c45e32
+(@eval_step_by_step begin sqrt(sqrt(4)) + 2 end) .|> prettycolors
+
+# ╔═╡ c46d5246-e62f-4f2e-9e3a-0608c8c48b2e
+(@eval_step_by_step begin 4+4 ∈ [1:7...] end) .|> prettycolors
+
+# ╔═╡ 7dc21aa9-252f-4654-95c8-fe297f0d6021
+expand_lowered_to_expr(lowered_with_reference_to_expr(:([1:7...])); expr_ref=:expr_ref) .|> prettycolors
+
+# ╔═╡ 03579ca6-d04b-4ba7-829c-8cf3c3fdbafa
+expand_lowered_to_expr(lowered_with_reference_to_expr(:(sqrt(sqrt(1)))); expr_ref=:expr_ref) .|> prettycolors
+
+# ╔═╡ d2e1d5ae-2daa-4cf1-8cd9-68bb8c6c81a1
+let
+	executed_count = Ref(0)
+	steps = @eval_step_by_step(begin sqrt(sqrt(increase_counter(16, executed_count))) end) .|> prettycolors
+	
+	(executed_count=executed_count, steps=steps)
+end
+
+# ╔═╡ 3650d813-8a6c-4cd0-bb68-8b384e8211d8
+expand_lowered_to_expr(lowered_with_reference_to_expr(quote
+	@test 1 + 1
+end); expr_ref=:expr_ref) .|> prettycolors
+
+# ╔═╡ 907543c6-b7ed-4521-af21-d6fb86ce4518
+expand_lowered_to_expr(lowered_sqrt; expr_ref=:expr_ref) .|> prettycolors
+
+# ╔═╡ 0a7a0d9e-034f-4f36-a57c-34b5d4ca896d
+expand_lowered_to_expr(xxx; expr_ref=:expr_ref) .|> prettycolors
+
+# ╔═╡ ba28d507-816f-45c0-b6c0-2f5f4f09855f
+(@eval_step_by_step begin sqrt(sqrt(4)) == 2 end) .|> prettycolors
+
+# ╔═╡ 930f8244-cf25-4c1a-95f6-5c8963559c62
+@macroexpand(@eval_step_by_step x == [1,2]) |> prettycolors
 
 # ╔═╡ 35f63c4e-3583-4ea8-a057-31f18f8a09d6
 md"""
@@ -860,12 +871,6 @@ function test(expr, extra_args...)
 		end
 	end
 end
-
-# ╔═╡ 0fcc6cb0-2711-4609-9bf3-634cf9407840
-div(x; class="", style="") = @htl("<div class=$(class) style=$(style)>$(x)</div>")
-
-# ╔═╡ 69200d7c-b7bc-4c7e-a9a1-5e26979179a3
-div(; class="", style="") = x -> @htl("<div class=$(class) style=$(style)>$(x)</div>")
 
 # ╔═╡ 872b4877-30dd-4a92-a3c8-69eb50675dcb
 preish(x) = @htl("<pre-ish>$(x)</pre-ish>")
@@ -952,6 +957,9 @@ function frames(fs::Vector)
 	
 end
 
+# ╔═╡ 74c19786-1ba7-4865-a993-590a779ae564
+frames(rs)
+
 # ╔═╡ b273d3d3-648f-4d34-94e7-e49277d4ba29
 with_slotted_css(x) = @htl("""
 	$(x)
@@ -971,6 +979,15 @@ macro visual_debug(expr)
 	end
 end
 
+# ╔═╡ a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
+@visual_debug begin
+	(1+2) + (7-6)
+	plot(2000 .+ 30 .* rand(2+2))
+	4+5
+	sqrt(sqrt(sqrt(5)))
+	md"# Wow"
+end
+
 # ╔═╡ 69bfb438-7ecf-4f9b-8bc4-51e07aa46ef1
 @skip_as_script Core.eval(Module(), ex1)
 
@@ -985,22 +1002,6 @@ ex3 = Expr(:call, :first, Computed(ex2_inner_result))
 
 # ╔═╡ 9bed78b6-5a8f-44ce-ab66-cab685daf264
 unwrap_computed(ex3)
-
-# ╔═╡ 8ef356ea-7d54-43e6-a936-7c8be04c595f
-@skip_as_script onestep_light(quote
-		1+2
-		2+3
-		4+5
-		sqrt(sqrt(sqrt(5)))
-	end) .|> prettycolors
-
-# ╔═╡ 4edf747b-3838-4315-a397-e452ac9b5465
-@skip_as_script onestep_light(quote
-		(1+2) + (7-6)
-		2+3
-		4+5
-		sqrt(sqrt(sqrt(5)))
-	end |> remove_linenums) .|> slot
 
 # ╔═╡ d414f840-4952-4de5-a565-7fdc81a94817
 "The opposite of `@skip_as_script`"
@@ -1222,6 +1223,12 @@ end
 # ╔═╡ 98992db9-4f14-4aa6-a7c5-477622266112
 @bind k Slider(0:15)
 
+# ╔═╡ 93ed973f-daf6-408b-9d4b-d53495418610
+@bind rindex Slider(eachindex(rs))
+
+# ╔═╡ dea898a0-1904-4d09-ad0b-6915008fe946
+rs[rindex]
+
 # ╔═╡ 187c3005-cd43-45a0-8cbd-bc96b9cb39da
 Dump(x; maxdepth=8) = sprint(io -> dump(io, x; maxdepth=maxdepth)) |> Text
 
@@ -1258,32 +1265,6 @@ end;
 
 # ╔═╡ 6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
 plot(args...; kwargs...) = Hannes
-
-# ╔═╡ b4b317d7-bed1-489c-9650-8d336e330689
-rs = @eval_step_by_step(begin
-		(1+2) + (7-6)
-		plot(2000 .+ 30 .* rand(2+2))
-		4+5
-		sqrt(sqrt(sqrt(5)))
-	end) .|> SlottedDisplay
-
-# ╔═╡ 93ed973f-daf6-408b-9d4b-d53495418610
-@bind rindex Slider(eachindex(rs))
-
-# ╔═╡ dea898a0-1904-4d09-ad0b-6915008fe946
-rs[rindex]
-
-# ╔═╡ 74c19786-1ba7-4865-a993-590a779ae564
-frames(rs)
-
-# ╔═╡ a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
-@visual_debug begin
-	(1+2) + (7-6)
-	plot(2000 .+ 30 .* rand(2+2))
-	4+5
-	sqrt(sqrt(sqrt(5)))
-	md"# Wow"
-end
 
 # ╔═╡ 5b70aaf1-9623-4f55-b055-4263ed8be31d
 Floep = let
@@ -1405,7 +1386,7 @@ begin
 			<pt-dot class="floating top"></pt-dot>
 			<pt-dot class="floating bottom"></pt-dot>
 		
-			$(frames(SlottedDisplay.( call.steps)))
+			$(frames(SlottedDisplay.(call.steps)))
 		</div>
 		<style>
 		$(pluto_test_css)
@@ -1546,6 +1527,140 @@ end
 # ╔═╡ de62537b-a428-48d3-a866-151127b3255b
 
 
+# ╔═╡ 00000000-0000-0000-0000-000000000001
+PLUTO_PROJECT_TOML_CONTENTS = """
+[deps]
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+HypertextLiteral = "~0.9.0"
+"""
+
+# ╔═╡ 00000000-0000-0000-0000-000000000002
+PLUTO_MANIFEST_TOML_CONTENTS = """
+# This file is machine-generated - editing it directly is not advised
+
+[[ArgTools]]
+uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
+
+[[Artifacts]]
+uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+
+[[Base64]]
+uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[Dates]]
+deps = ["Printf"]
+uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[Downloads]]
+deps = ["ArgTools", "LibCURL", "NetworkOptions"]
+uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+
+[[HypertextLiteral]]
+git-tree-sha1 = "72053798e1be56026b81d4e2682dbe58922e5ec9"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.0"
+
+[[InteractiveUtils]]
+deps = ["Markdown"]
+uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+
+[[LibCURL]]
+deps = ["LibCURL_jll", "MozillaCACerts_jll"]
+uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
+
+[[LibCURL_jll]]
+deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
+uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
+
+[[LibGit2]]
+deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
+uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
+
+[[LibSSH2_jll]]
+deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
+uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
+
+[[Libdl]]
+uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[[Logging]]
+uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
+
+[[Markdown]]
+deps = ["Base64"]
+uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
+
+[[MbedTLS_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
+
+[[MozillaCACerts_jll]]
+uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
+
+[[NetworkOptions]]
+uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
+
+[[Pkg]]
+deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
+uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+
+[[Printf]]
+deps = ["Unicode"]
+uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[[REPL]]
+deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
+uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+
+[[Random]]
+deps = ["Serialization"]
+uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[SHA]]
+uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+
+[[Serialization]]
+uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+
+[[Sockets]]
+uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
+
+[[TOML]]
+deps = ["Dates"]
+uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[[Tar]]
+deps = ["ArgTools", "SHA"]
+uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+
+[[Test]]
+deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
+uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[[UUIDs]]
+deps = ["Random", "SHA"]
+uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
+[[Unicode]]
+uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+
+[[Zlib_jll]]
+deps = ["Libdl"]
+uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
+
+[[nghttp2_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
+
+[[p7zip_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+"""
+
 # ╔═╡ Cell order:
 # ╟─ab02837b-79ec-40d7-bff1-c1d2dd7362ef
 # ╠═73d74146-8f60-4388-aaba-0dfe4215cb5d
@@ -1621,13 +1736,7 @@ end
 # ╠═9c3f6eab-b1c3-4607-add8-d6d7e468c11a
 # ╠═1ac164c8-88fc-4a87-a194-60ef616fb399
 # ╠═98ac4c36-49c7-4f65-982d-0b8bf6c372c0
-# ╠═0fcc6cb0-2711-4609-9bf3-634cf9407840
-# ╠═69200d7c-b7bc-4c7e-a9a1-5e26979179a3
 # ╠═ea73a35e-a34f-4708-acc1-858f2466e9ba
-# ╠═b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
-# ╠═ef6fc423-f1b1-4dcb-a059-276121391bc6
-# ╠═4d5f44e4-85e9-4985-9b76-73be5e097186
-# ╠═dd495e00-d74d-47d4-a5d5-422fb147ec3b
 # ╟─a83a6a4c-664c-46fa-a07f-81088493dc35
 # ╟─5cb03161-2cbc-4080-ba59-f94efd3b620c
 # ╟─0611a36b-b4be-4b17-a485-7c4a8fa04927
@@ -1686,7 +1795,6 @@ end
 # ╠═930f8244-cf25-4c1a-95f6-5c8963559c62
 # ╠═68ba60db-44ad-43e4-b33e-d27696babc99
 # ╠═807bcd72-26c3-44d3-a295-56874cb51a89
-# ╠═8ef356ea-7d54-43e6-a936-7c8be04c595f
 # ╠═88f6a040-07cf-47e0-a8be-2478ea350aa7
 # ╠═d36a8a72-eced-4e63-9130-7fcb6c86df76
 # ╠═e9659020-d433-4357-9099-71a65b66a091
@@ -1698,7 +1806,6 @@ end
 # ╠═84ff6a23-c134-4910-b630-a7ad45f3bf29
 # ╠═318363d0-6d9e-4144-b478-b775f437edaf
 # ╠═67fd07b7-340b-4e24-bc06-e4c85b186872
-# ╠═4edf747b-3838-4315-a397-e452ac9b5465
 # ╟─c6d5597c-d505-4125-88c4-10415934d2a4
 # ╠═872b4877-30dd-4a92-a3c8-69eb50675dcb
 # ╠═c877c109-db16-468c-8f3c-8294db859d6d
@@ -1717,6 +1824,11 @@ end
 # ╠═a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
 # ╟─34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
 # ╟─f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
+# ╠═c55ae954-2d1e-4633-91e6-2c303ae40334
+# ╟─b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+# ╟─ef6fc423-f1b1-4dcb-a059-276121391bc6
+# ╟─4d5f44e4-85e9-4985-9b76-73be5e097186
+# ╟─dd495e00-d74d-47d4-a5d5-422fb147ec3b
 # ╠═35f63c4e-3583-4ea8-a057-31f18f8a09d6
 # ╟─35b2770e-1db6-4327-bf86-c27a4b61dbd3
 # ╟─22640a2f-ea38-4517-a4f3-7a65e60ffebe
@@ -1731,3 +1843,5 @@ end
 # ╠═daee414b-3e3c-4e2a-a25a-429a1e7275d5
 # ╟─6c0156a9-7281-4326-9e1f-989efa73bb7b
 # ╠═de62537b-a428-48d3-a866-151127b3255b
+# ╟─00000000-0000-0000-0000-000000000001
+# ╟─00000000-0000-0000-0000-000000000002

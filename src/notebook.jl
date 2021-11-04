@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.0
+# v0.16.4
 
 using Markdown
 using InteractiveUtils
@@ -15,9 +15,8 @@ end
 
 # ╔═╡ ab02837b-79ec-40d7-bff1-c1d2dd7362ef
 md"""
-> # PlutoTest.jl
-> 
-> _Visual, reactive testing library for Julia_
+# PlutoTest.jl
+_Visual, reactive testing library for Julia_
 
 A macro `@test` that you can use to verify your code's correctness. 
 
@@ -46,9 +45,6 @@ md"""
 ### (You need `Pluto ≥ 0.14.5` to run this notebook)
 """
 
-# ╔═╡ 80b2fb3f-94b2-4024-94ff-d111a249c8b0
-
-
 # ╔═╡ 9d49ea50-8158-4d8b-97af-edba1f7dc38b
 x = [1,3]
 
@@ -56,8 +52,20 @@ x = [1,3]
 # Fons wtf
 always_false(args...; kwargs...) = true
 
+# ╔═╡ b0ab9327-8240-4d34-bdd9-3f8f5117bb29
+struct PlutoStylesheet
+	code
+end
+
+# ╔═╡ 1e619ca9-e00f-46d0-b327-85b33929787f
+function Base.show(io::IO, mime::MIME"text/html", stylesheet::PlutoStylesheet)
+	# show(io, mime, md"`<style>...`")
+	print(io, "Stylesheet")
+end
+
 # ╔═╡ 8a2e8348-49cf-4855-b5b3-cdee33e5ed67
-const pluto_test_css = """
+# const pluto_test_css = PlutoStylesheet("""
+pluto_test_css = PlutoStylesheet("""
 pt-dot {
 	flex: 0 0 auto;
 	background: grey;
@@ -120,9 +128,10 @@ pt-dot.floating.bottom {
 .pluto-test {
 	font-family: "JuliaMono", monospace;
 	font-size: 0.75rem;
-padding: 4px;
-
-min-height: 25px;
+	white-space: normal;
+	padding: 4px;
+	
+	min-height: 25px;
 }
 
 
@@ -190,10 +199,11 @@ border-radius: 7px;
 .pluto-test.expanded > p-frame-viewer > p-frames > slotted-code > line-like > pluto-display[mime="application/vnd.pluto.tree+object"] {
 	/*flex-basis: 100%;*/
 }
-""";
+""")
 
 # ╔═╡ 42671258-07a0-4015-8f47-4b3032595f08
-const frames_css = """
+# const frames_css = PlutoStylesheet("""
+frames_css = PlutoStylesheet("""
 p-frame-viewer {
 	display: inline-flex;
 	flex-direction: column;
@@ -202,7 +212,7 @@ p-frames,
 p-frame-controls {
 	display: inline-flex;
 }
-""";
+""")
 
 # ╔═╡ 0d70962a-3880-4dee-a439-35068d019f5a
 md"""
@@ -282,55 +292,12 @@ md"""
 # 	end
 # end
 
-# ╔═╡ 4bc1b7a4-0a36-4a07-b7ee-3d5be50350e1
-("asd"*"asd","asd","asd"*" asd","asd","asd"*"asd","asd","asd"*"asd","asd","asd"*"asd","asd","asd"*"asd","asd","asd"*"asd","asd")
-
-# ╔═╡ 3b2e8f55-1d4b-4a36-83f6-26becbd79e4b
-# @test (@test t isa Pass) isa Pass
-
-# ╔═╡ ec2ed42c-1227-4e0d-b642-20e6f3503d2a
-embed_display(x) = if isdefined(Main, :PlutoRunner) && isdefined(Main.PlutoRunner, :embed_display)
-	# if this package is used inside Pluto, and Pluto is new enough
-	Main.PlutoRunner.embed_display(x)
-else
-	identity(x)
-end
-
-# ╔═╡ 1ac164c8-88fc-4a87-a194-60ef616fb399
-flatmap(args...) = vcat(map(args...)...)
-
-# ╔═╡ 98ac4c36-49c7-4f65-982d-0b8bf6c372c0
-emb = embed_display
-
-# ╔═╡ 4d5f44e4-85e9-4985-9b76-73be5e097186
-remove_linenums(e::Expr) = if e.head === :macrocall
-	Expr(e.head, (remove_linenums(x) for x in e.args)...)
-else
-	Expr(e.head, (remove_linenums(x) for x in e.args if !(x isa LineNumberNode))...)
-end
-
-# ╔═╡ dd495e00-d74d-47d4-a5d5-422fb147ec3b
-remove_linenums(x) = x
-
-# ╔═╡ a83a6a4c-664c-46fa-a07f-81088493dc35
-const ObjectID = typeof(objectid("hello computer"))
-
-
-# ╔═╡ 5cb03161-2cbc-4080-ba59-f94efd3b620c
-expr_hash(e::Expr) = objectid(e.head) + mapreduce(p -> objectid((p[1], expr_hash(p[2]))), +, enumerate(e.args); init=zero(ObjectID))
-
-# ╔═╡ 0611a36b-b4be-4b17-a485-7c4a8fa04927
-expr_hash(x) = objectid(x)
-
 # ╔═╡ dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 md"""
 # $(html"<img src='https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg' style='height: .75em; margin-bottom: -.1em'>") _Time travel_ evaluation
 
 In Julia, expressions are objects! This means that, before evaluation, code is expressed as a Julia object:
 """
-
-# ╔═╡ d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
-ex1 = :(first([56,sqrt(9)]))
 
 # ╔═╡ 7c2bab29-8609-4575-b2ca-7feb34915645
 md"""
@@ -341,9 +308,6 @@ You can use `Core.eval` to evaluate expressions at runtime:
 md"""
 But _did you know_ that you can also **partially evaluate** expressions? 
 """
-
-# ╔═╡ a3c41025-2f4a-4f9c-8577-72e4b7abbb98
-ex2_inner = ex1.args[2]
 
 # ╔═╡ b056a99d-5b13-47ba-a199-d788410e3c99
 md"""
@@ -361,20 +325,6 @@ Our time travel mechanism will be based on the partial evaluation principle intr
 struct Computed
 	x
 end
-
-# ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
-expr_to_str(e, mod=@__MODULE__()) = let
-	Computed
-	sprint() do io
-		Base.print(IOContext(io, :module => @__MODULE__), remove_linenums(e))
-	end
-end
-
-# ╔═╡ ea73a35e-a34f-4708-acc1-858f2466e9ba
-expr_to_str(:(x+1))
-
-# ╔═╡ ef6fc423-f1b1-4dcb-a059-276121391bc6
-prettycolors(e) = Markdown.MD([Markdown.Code("julia", expr_to_str(e))])
 
 # ╔═╡ f9c81ab1-556c-4d81-bee8-2897c20e324d
 md"""
@@ -397,8 +347,8 @@ md"""
 
 """
 
-# ╔═╡ 302c1fab-a358-4a5f-a3fb-4f26a17df4f6
-
+# ╔═╡ b46b02b7-242a-48bf-bac8-8a3b6474384b
+function lonely_function end
 
 # ╔═╡ 7db64b02-8f64-4146-bf77-ef94cb45aae0
 function increase_counter(x, ref)
@@ -406,8 +356,334 @@ function increase_counter(x, ref)
 	return x
 end
 
-# ╔═╡ 83517988-08da-4031-8d51-50d79b48b73a
+# ╔═╡ 886c8080-cd29-4c72-898b-4fbd3a988e4d
 
+
+# ╔═╡ ec6f1b07-d026-45ca-996d-be7693664cd7
+deepcopy_expr(e::Expr) = Expr(e.head, (deepcopy_expr(sub_e) for sub_e in e.args)...)
+
+# ╔═╡ dadf1c50-6588-4345-a240-69a72336c7cd
+deepcopy_expr(e) = e
+
+# ╔═╡ c335fea6-6bf5-489f-9218-de67e45c38a8
+let
+	x = :(let 
+		x = 3 - sqrt(16)
+		false
+	end)
+	x.args[2].args[2]
+end
+
+# ╔═╡ a29d5277-e97a-4cca-8e31-8037f9cfdd80
+"""
+    build_check_for_computed(lens::Expr, default::Expr)
+
+Ideally, this function doesn't exist.
+
+It will wrap a normal expression into an expression that first checks if the `lens` refers to a `Computed` value, if so use the value it contains, if not, use the original expression.
+
+This is fine for now, but it isn't beautiful, and I didn't want to make this output even bigger expressions (as these are put inline into existing expressions, making them already quite unreadable), so there isn't any error handling. (If executing `lens` gives an error, you're out).
+
+Ideally we don't have to check for `Computed`, because we know very well which references will be `Computed` and which won't. But that's for later 🙃
+"""
+function build_check_for_computed(lens::Expr, default::Expr)
+	if Meta.isexpr(default, :..., 1) && Meta.isexpr(default.args[1], :call)
+		# Can't have `x...` as a standalone expression, so need to 
+		# dive in to replace the `x` instead of the whole thing
+		# e.g. `(x[1] isa Computed ? x[1].x : (1:7))...` (fine)
+		# instead of `(x isa Computed ? x.x : (1:7)...)` (not fine)
+		# Subtle, but important difference.
+		:((
+			$(lens).args[1] isa Computed ?
+			$(lens).args[1].x :
+			$(esc(default.args[1]))
+		)...)
+	elseif Meta.isexpr(default, :call)
+		# We can assume that a `call` will be done before
+		:($(lens) isa Computed ? $(lens).x : $(esc(default)))
+	else
+		esc(default)
+	end
+
+end
+
+# ╔═╡ 4f7aac13-9e49-4b2b-8d78-53f583f6130a
+function build_check_for_computed(lens::Expr, default::Any)
+	esc(default)
+end
+
+# ╔═╡ 74929fa6-d1f7-41cd-ab55-48f35d5fbf28
+md"""
+## code\_loweredish\_with\_lenses
+"""
+
+# ╔═╡ 5e66e59b-fdb8-4373-b231-097b0227dc5c
+begin
+	struct ExprWithLens
+		expr
+		lens
+		expr_to_show
+	end
+	ExprWithLens(; expr, lens=[], expr_to_show=expr) = ExprWithLens(expr, lens, expr_to_show)
+end
+
+# ╔═╡ 17dea9e5-84ea-4476-a318-cc475043c83b
+Frames = Vector{ExprWithLens}
+
+# ╔═╡ 779c75cf-b35d-439c-87b7-b42740d2c870
+begin
+    (var"#49881#pluto_result", var"#49882#julia_test_result") = try
+            var"#49889#result" = begin
+                    local var"#49883#expr_raw" = $(QuoteNode(:(x = 3 - sqrt(16))))
+                    try
+                        var"#49884#steps" = begin
+                                begin
+                                    var"#49885#expr" = $(QuoteNode(:(x = 3 - sqrt(16))))
+                                    var"#49886###steps#4270" = Any[var"#49885#expr"]
+                                    var"#49887###expr_ref#4269" = Main.var"workspace#155".Ref{Main.workspace#155.Any}(var"#49885#expr")
+                                    begin
+                                        nothing
+                                        nothing
+                                        var"#49888#val" = try
+                                                sqrt(16)
+                                            catch var"#49904#e"
+                                                #= /home/michiel/PlutoTest.jl/src/notebook.jl#==#f5d9a4c5-300f-4dae-8507-346ec0b74632:53 =# @error ":((\$(Expr(:escape, :sqrt)))(\$(Expr(:escape, 16))))"
+                                                Main.workspace#155.rethrow(var"#49904#e")
+                                            end
+                                        var"#49887###expr_ref#4269"[] = (Main.workspace#2.deepcopy_expr)(var"#49887###expr_ref#4269"[])
+                                        ((var"#49887###expr_ref#4269"[]).args[2]).args[3] = Main.workspace#155.Computed(var"#49888#val")
+                                        Main.workspace#155.push!(var"#49886###steps#4270", var"#49887###expr_ref#4269"[])
+                                    end
+                                    begin
+                                        nothing
+                                        nothing
+                                        var"#49888#val" = try
+                                                3 - if ((var"#49887###expr_ref#4269"[]).args[2]).args[3] isa Main.workspace#155.Computed
+                                                        (((var"#49887###expr_ref#4269"[]).args[2]).args[3]).x
+                                                    else
+                                                        sqrt(16)
+                                                    end
+                                            catch var"#49904#e"
+                                                #= /home/michiel/PlutoTest.jl/src/notebook.jl#==#f5d9a4c5-300f-4dae-8507-346ec0b74632:53 =# @error ":((\$(Expr(:escape, :-)))(\$(Expr(:escape, 3)), if ((var\"##expr_ref#4269\"[]).args[2]).args[3] isa Computed\n          (((var\"##expr_ref#4269\"[]).args[2]).args[3]).x\n      else\n          \$(Expr(:escape, :(sqrt(16))))\n      end))"
+                                                Main.workspace#155.rethrow(var"#49904#e")
+                                            end
+                                        var"#49887###expr_ref#4269"[] = (Main.workspace#2.deepcopy_expr)(var"#49887###expr_ref#4269"[])
+                                        (var"#49887###expr_ref#4269"[]).args[2] = Main.workspace#155.Computed(var"#49888#val")
+                                        Main.workspace#155.push!(var"#49886###steps#4270", var"#49887###expr_ref#4269"[])
+                                    end
+                                    begin
+                                        nothing
+                                        nothing
+                                        var"#49888#val" = try
+                                                3 - if ((var"#49887###expr_ref#4269"[]).args[2]).args[3] isa Main.workspace#155.Computed
+                                                        (((var"#49887###expr_ref#4269"[]).args[2]).args[3]).x
+                                                    else
+                                                        sqrt(16)
+                                                    end
+                                            catch var"#49904#e"
+                                                #= /home/michiel/PlutoTest.jl/src/notebook.jl#==#f5d9a4c5-300f-4dae-8507-346ec0b74632:53 =# @error ":((\$(Expr(:escape, :-)))(\$(Expr(:escape, 3)), if ((var\"##expr_ref#4269\"[]).args[2]).args[3] isa Computed\n          (((var\"##expr_ref#4269\"[]).args[2]).args[3]).x\n      else\n          \$(Expr(:escape, :(sqrt(16))))\n      end))"
+                                                Main.workspace#155.rethrow(var"#49904#e")
+                                            end
+                                        var"#49887###expr_ref#4269"[] = (Main.workspace#2.deepcopy_expr)(var"#49887###expr_ref#4269"[])
+                                        (var"#49887###expr_ref#4269"[]).args[2] = Main.workspace#155.Computed(var"#49888#val")
+                                        Main.workspace#155.push!(var"#49886###steps#4270", var"#49887###expr_ref#4269"[])
+                                    end
+                                    var"#49886###steps#4270"
+                                end
+                            end
+                        var"#49889#result" = Main.workspace#155.unwrap_computed(Main.workspace#155.last(var"#49884#steps"))
+                        if var"#49889#result" === true
+                            Main.workspace#155.CorrectCall(var"#49883#expr_raw", var"#49884#steps")
+                        else
+                            Main.workspace#155.WrongCall(var"#49883#expr_raw", var"#49884#steps")
+                        end
+                    catch var"#49904#e"
+                        #= /home/michiel/PlutoTest.jl/src/notebook.jl#==#b6e8a170-12cc-4d97-905d-274e2609bfd8:20 =# @info "e" e
+                        Main.workspace#155.rethrow(var"#49904#e")
+                    end
+                end
+            (var"#49889#result", (Main.workspace#155.Test).Returned(var"#49889#result" isa Main.workspace#155.CorrectCall, "", $(QuoteNode(:(#= /home/michiel/PlutoTest.jl/src/notebook.jl#==#40902263-04b9-4022-b156-a19bdb0b568c:1 =#)))))
+        catch var"#49897#err"
+            Main.workspace#155.rethrow(var"#49897#err")
+            (var"#49897#err", (Main.workspace#155.Test).Threw(var"#49897#err", (Main.workspace#155.Base).catch_stack(), $(QuoteNode(:(#= /home/michiel/PlutoTest.jl/src/notebook.jl#==#40902263-04b9-4022-b156-a19bdb0b568c:1 =#)))))
+        end
+    try
+        (Main.workspace#155.Test).do_test(var"#49882#julia_test_result", $(QuoteNode(:(x = 3 - sqrt(16)))))
+    end
+    var"#49881#pluto_result"
+end
+
+# ╔═╡ 67ad5781-e8bd-4f13-a03e-dcc5773574a0
+@info "hi"
+
+# ╔═╡ c2e3377d-a456-40a1-b904-d285d47b50c6
+PlutoRunner.computers
+
+# ╔═╡ 37e2d966-0f46-4b64-bb3a-c057e344fa02
+eee = :(x = 3 - sqrt(16))
+
+# ╔═╡ bcff728d-0781-44ce-8033-9f642207a475
+eee.args[2].args[3]
+
+# ╔═╡ 0a3f5c6c-6e1b-458c-bf91-523a0b639b41
+md"""
+#### `code_loweredish_with_lenses` for all non-Expr types
+"""
+
+# ╔═╡ 43fe89d7-f33e-4dfa-853e-327e981feb1e
+function code_loweredish_with_lenses(x::Symbol)
+	# Should we replace variables with their value as a step?
+	[ExprWithLens(expr=x, lens=[])]
+	# For now I'm assuming people know what their variables are...
+	# return ExprWithLens[]
+end
+
+# ╔═╡ fc000550-3053-483e-bc41-6aed22c3999c
+code_loweredish_with_lenses(x::QuoteNode) = ExprWithLens[]
+
+# ╔═╡ 3f11ca4c-dd06-47c9-92e2-cb97c18a06db
+code_loweredish_with_lenses(x::Number) = ExprWithLens[]
+
+# ╔═╡ b155d336-f746-4c82-8206-ab1a49cedea8
+code_loweredish_with_lenses(x::String) = ExprWithLens[]
+
+# ╔═╡ 221aa13b-aa25-4145-8076-da77432364bb
+code_loweredish_with_lenses(x::LineNumberNode) = ExprWithLens[]
+
+# ╔═╡ 2a514f2f-79c8-4b0d-be8a-170f3386d5d5
+code_loweredish_with_lenses(x) = error("Type of expression not supported ($(typeof(x)))")
+# code_loweredish_with-lenses(x) = [ExprWithLens(expr=x, lens=[])]
+
+# ╔═╡ 9fb4d52d-77f2-4032-a769-6d5e60be43bf
+md"""
+#### `expr_lenses_for_quoted`
+Which will ignore everything except `:$` expressions, and then call `code_loweredish_with_lenses` for those.
+"""
+
+# ╔═╡ cade56ad-312e-40cf-bcda-11480ce27852
+expr_lenses_for_quoted(x, _) = ExprWithLens[]
+
+# ╔═╡ d384e3fc-b207-48ce-bc7b-1b47a14b1581
+function apply_lens_to_frames(lens, frames)
+	map(frames) do frame
+		ExprWithLens(
+			expr=frame.expr,
+			lens=[lens..., frame.lens...]
+		)
+	end
+end
+
+# ╔═╡ a6e8c835-f209-445a-9f43-cdf2ecfd1b57
+md"""
+## Tests for all expression types
+"""
+
+# ╔═╡ 5759b2cc-1e96-4069-ae42-bc159c7cf5fb
+md"#### Basic"
+
+# ╔═╡ 716d9ddc-18dc-4973-924e-e5ebf9161ff6
+md"#### Edge cases"
+
+# ╔═╡ de94f2b5-96ae-4936-870f-7639a39fd40d
+md"""
+Functions that aren't just coming from simple references (so say, Higher-order functions and such) should actually get a mention in the time travel. Right now it is still as this odd "#X#123" thingy (which is even worse when it is anonymous..), but this we could make prettier later.
+"""
+
+# ╔═╡ 21d4560e-721f-4ed4-9db7-86a8151ab22c
+md"""
+## Displaying objects inside code
+"""
+
+# ╔═╡ 99afc7f4-727c-4277-8311-f2ffa94830ae
+md"""
+#### Slotting
+
+We walk through the expression tree. Whenever we find a `Computed` object, we generate a random key (e.g. `iosjddfo`), we add it to our dictionary (`found`). In the expression, we replace the `Computed` object with a placeholder symbol `__slotiosjddfo__`. We will later be able to match the object to this slot.
+"""
+
+# ╔═╡ 4956526a-daf9-43c9-bff3-ff2446016e2e
+slot!(found, c::Computed) = let
+	k = Symbol("__slot", join(rand('a':'z', 16)), "__")
+	found[k] = c
+	k
+end
+
+# ╔═╡ 84ff6a23-c134-4910-b630-a7ad45f3bf29
+slot!(found, x) = x
+
+# ╔═╡ 318363d0-6d9e-4144-b478-b775f437edaf
+slot!(found, e::Expr) = Expr(e.head, slot!.([found], e.args)...)
+
+# ╔═╡ 67fd07b7-340b-4e24-bc06-e4c85b186872
+slot(e) = let
+	d = Dict{Symbol,Any}()
+	new_e = slot!(d, e)
+	d, new_e
+end
+
+# ╔═╡ c6d5597c-d505-4125-88c4-10415934d2a4
+md"""
+### SlottedDisplay
+
+We use `print` to turn the expression into source code.
+
+For each line, we regex-search for slot variables, and we split the line around those. The code segments around slots are rendered inside `<pre-ish>` tags (like `<pre>` but inline), and the slots are replaced by [embedded displays](https://github.com/fonsp/Pluto.jl/pull/1126) of the objects.
+"""
+
+# ╔═╡ c877c109-db16-468c-8f3c-8294db859d6d
+begin
+	struct SlottedDisplay
+		d
+		e
+	end
+	SlottedDisplay(expr) = SlottedDisplay(slot(expr)...)
+end
+
+# ╔═╡ 8480d0d7-bdf7-468d-9344-5b789e33921c
+# const slotted_code_css = PlutoStylesheet("""
+slotted_code_css = PlutoStylesheet("""
+slotted-code {
+	font-family: "JuliaMono", monospace;
+	font-size: .75rem;
+	display: flex;
+	flex-direction: column;
+}
+pre-ish {
+	white-space: pre;
+}
+
+line-like {
+	display: flex;
+	align-items: baseline;
+}
+""")
+
+# ╔═╡ b5763c10-e11c-4389-b6fc-421d2c9682f1
+md"""
+### Frame viewer
+
+A widget that takes a series of elements and displays them as 'video frames' with a timeline scrubber.
+"""
+
+# ╔═╡ 3d5abd58-02ab-4b91-a7a3-d9068d4df017
+md"""
+## @visual_debug (awesome)
+"""
+
+# ╔═╡ 34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
+
+
+# ╔═╡ f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
+md"""
+# Appendix
+"""
+
+# ╔═╡ 20166ec9-7084-4d58-8b19-3aa51cc8f2c6
+md"""
+## Macro Lenses
+
+I need stuff like Accessors.jl, but I didn't feel like another dependency and also *felt* like I should be macro-ish. So that's that this is...
+"""
 
 # ╔═╡ 1633fe05-cb51-4032-b6b6-f23db72bbd49
 struct FieldLens property::Symbol end
@@ -475,324 +751,89 @@ function lens_to_getter(subject, lens::Vector)
 	lens_to_getter(next_subject, path)
 end
 
-# ╔═╡ 0f31dd2e-0331-4d4c-8db5-9ce188cd3730
-lens_to_getter(nothing, [PropertyLens(:x), PropertyLens(:y)])
-
-# ╔═╡ 828e089e-64be-47c5-8e3c-7107adf02367
-lens_to_setter(Dict(:y => 1), [PropertyLens(:x)], 2)
-
-# ╔═╡ 5e66e59b-fdb8-4373-b231-097b0227dc5c
-Base.@kwdef struct CodeFrameWithExpr
-	expr
-	lens
-end
-
 # ╔═╡ f5d9a4c5-300f-4dae-8507-346ec0b74632
-function expand_lowered_to_expr(
-	lowered::Vector{CodeFrameWithExpr};
-	expr_ref
-)
+"""
+    function build_step_by_step_blocks(lowered::Vector{ExprWithLens};
+      expr_ref_lens,
+      steps_lens,
+     )::Vector{Expr}
+
+Transforms an `ExprWithLens`-list (created by `code_loweredish_with_lenses`), into a list of expressions that will mutate whatever `expr_ref_lens` points to.
+
+- `expr_ref_lens` needs to point to a `Ref{Expr}`
+- `steps_lens` needs to point to a `Vector{Expr}`
+"""
+function build_step_by_step_blocks(
+	lowered::Vector{ExprWithLens};
+	expr_ref_lens=:EXPR_REF_LENS_DEFAULT,
+	steps_lens=:STEPS_LENS_DEFAULT,
+)::Vector{Expr}
 	map(lowered) do frame
 		# This whoooooole thing is to not execute parts of the code multiple times.
 		# It replaces, when possible, the arguments in the expression with a reference
 		# to the argument in the latest version of the expression
 		# (where some nodes are Computed, which we will use)
-		frame_lens = lens_to_getter(expr_ref, [
+		frame_lens = lens_to_getter(expr_ref_lens, [
 			EmptyPropertyLens(),
 			frame.lens...,
 		])
-		expr_with_arguments_as_references = if Meta.isexpr(frame.expr, :macrocall)
-			esc(frame.expr)
-		elseif frame.expr isa Expr
+		# TODO Use the same check here as we use in `code_loweredish_with_lenses`..
+		# .... Right now it only de-dupes inside calls, but not inside blocks
+		# .... (which we do split up in code_loweredish_with_lenses)
+		expr_with_arguments_as_references = if Meta.isexpr(frame.expr, :call) 
 			Expr(
 				frame.expr.head,
 				map(enumerate(frame.expr.args)) do (i, arg)
 					arg_lens = :($(frame_lens).args[$(i)])
-					if Meta.isexpr(arg, :...)
-						:((
-							$(arg_lens).args[1] isa Computed ?
-							$(arg_lens).args[1].x :
-							$(esc(arg.args[1]))
-						)...)
-					elseif Meta.isexpr(arg, :call)
-						:($(arg_lens) isa Computed ? $(arg_lens).x : $(esc(arg)))
-					else
-						esc(arg)
-					end
+					build_check_for_computed(arg_lens, arg)
 				end...
 			)
 		else
 			esc(frame.expr)
 		end
+		
+		# If you feel like "I don't need that optimised shit",
+		# and want to see an easier to digest result, uncomment this line
+		#expr_with_arguments_as_references = esc(frame.expr)
 
+		
 		quote
-			# asdasdsada
-			val = $(expr_with_arguments_as_references)
-			$expr_ref[] = deepcopy($expr_ref[])
+			$(expr_ref_lens == :EXPR_REF_LENS_DEFAULT ? :(error("expr_ref_lens wasn't assigned, so this code will not work, but you can see and inspect it")) : nothing)
+			$(steps_lens == :STEPS_LENS_DEFAULT ? :(error("steps_lens wasn't assigned, so this code will not work, but you can see and inspect it")) : nothing)
+
+			val =try
+				$(expr_with_arguments_as_references)
+			catch e
+				@error $(repr(expr_with_arguments_as_references))
+				rethrow(e)
+			end
+			
+			# Could use Accessors.jl to make this a lot less expensive... 🤷‍♀️
+			$expr_ref_lens[] = $(deepcopy_expr)($expr_ref_lens[])
 			$(lens_to_setter(
-				expr_ref,
+				expr_ref_lens,
 				[EmptyPropertyLens(), frame.lens...],
 				:(Computed(val))
 			))
-			push!(steps, $expr_ref[])
+			# TODO Ideally we even render the step here directly,
+			# .... so any side-effects will show up in time-travel.
+			push!($steps_lens, $expr_ref_lens[])
 		end
 	end
 end
-
-# ╔═╡ af787ecf-b54e-4519-801d-eee323a1a2a3
-function lowered_with_reference_to_expr(x)
-	[CodeFrameWithExpr(expr=x, lens=[])]
-end
-
-# ╔═╡ bd1d1541-134d-4c88-bb41-920ac36bfe92
-function lowered_with_reference_to_expr(e::Expr)::Vector{CodeFrameWithExpr}
-	if e.head === :call || e.head === :begin || e.head === :block# || e.head === :vect
-		argument_frames = flatmap(enumerate(e.args)) do (i, arg)
-			
-			if arg isa QuoteNode
-				[]
-				
-			elseif (Meta.isexpr(e, :call) || Meta.isexpr(e, :let)) && i == 1
-				[]
-				
-			elseif arg isa Symbol
-				[CodeFrameWithExpr(
-						expr=arg,
-						lens=[FieldLens(:args), PropertyLens(i)],
-				)]
-				
-			elseif arg isa Expr
-				frames = lowered_with_reference_to_expr(arg)
-				map(frames) do frame
-					CodeFrameWithExpr(
-						expr=frame.expr,
-						lens=[FieldLens(:args), PropertyLens(i), frame.lens...]
-					)
-				end
-			else
-				[]
-			end
-		end
-		
-		[
-			argument_frames...,
-			CodeFrameWithExpr(
-				expr=e,
-				lens=[]
-			)
-		]
-	else
-		[
-			CodeFrameWithExpr(
-				expr=e,
-				lens=[]
-			)
-		]
-	end
-end
-
-# ╔═╡ 7dc21aa9-252f-4654-95c8-fe297f0d6021
-expand_lowered_to_expr(lowered_with_reference_to_expr(:([1:7...])); expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ 03579ca6-d04b-4ba7-829c-8cf3c3fdbafa
-expand_lowered_to_expr(lowered_with_reference_to_expr(:(sqrt(sqrt(1)))); expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ 3650d813-8a6c-4cd0-bb68-8b384e8211d8
-expand_lowered_to_expr(lowered_with_reference_to_expr(quote
-	@test 1 + 1
-end); expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ bed3d31a-356a-4f9e-9a58-38b511f2b0e7
-lowered_sqrt = lowered_with_reference_to_expr(:(sqrt(sqrt(4)) == 2))
-
-# ╔═╡ 907543c6-b7ed-4521-af21-d6fb86ce4518
-expand_lowered_to_expr(lowered_sqrt; expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ b4e5b2a0-1ccb-4e10-bd5d-a26916568d69
-xxx = lowered_with_reference_to_expr(quote
-	sqrt(sqrt(4)) == 2
-end)
-
-# ╔═╡ 0a7a0d9e-034f-4f36-a57c-34b5d4ca896d
-expand_lowered_to_expr(xxx; expr_ref=:expr_ref) .|> prettycolors
-
-# ╔═╡ ceb2c456-de9b-40a7-ac9f-3ba8d8708c2f
-lowered_with_reference_to_expr(:(4+4 ∈ [1:7...]))
-
-# ╔═╡ 88f6a040-07cf-47e0-a8be-2478ea350aa7
-can_interpret(x) = true
-
-# ╔═╡ d36a8a72-eced-4e63-9130-7fcb6c86df76
-can_interpret_call_arg(e::Expr) = !(e.head === :(...) || e.head === :kw || e.head === :parameters)
-
-# ╔═╡ e9659020-d433-4357-9099-71a65b66a091
-can_interpret_call_arg(x) = true
-
-# ╔═╡ c3fc3292-b7eb-4b01-8fba-159c86228de9
-Meta.isbinaryoperator(:(==))
-
-# ╔═╡ 89578bff-16b9-4eb2-b8ee-b2839ff2d74c
-can_interpret(e::Expr) = if false
-	false
-elseif e.head === :call && !all(can_interpret_call_arg, e.args)
-	false
-# elseif e.head === :(=) || e.head === :macrocall
-# 	false
-else
-	all(can_interpret, e.args)
-end
-
-# ╔═╡ e1c306e3-0a47-4149-a9fb-ec7ab380fa11
-function step_by_step(expr)
-	Computed
-	expand_lowered_to_expr
-	
-	if can_interpret(expr)
-		lowered = lowered_with_reference_to_expr(expr)
-		
-		expr_ref = gensym("expr_ref")
-		quote
-			begin
-				expr = $(QuoteNode(expr))
-				steps = Any[expr]
-				$expr_ref = Ref{Any}(expr)
-				$(expand_lowered_to_expr(lowered; expr_ref=expr_ref)...)
-				steps
-			end
-		end
-	else
-		quote
-			[$(QuoteNode(expr)), Computed($(esc(expr)))]
-		end
-	end
-end
-
-# ╔═╡ a661e172-6afb-42ff-bd43-bb5b787ee5ed
-macro eval_step_by_step(e)
-	step_by_step(e)
-end
-
-# ╔═╡ 3fccae0c-ab69-4bc8-858b-ede886c45e32
-(@eval_step_by_step begin sqrt(sqrt(4)) + 2 end) .|> prettycolors
-
-# ╔═╡ c46d5246-e62f-4f2e-9e3a-0608c8c48b2e
-(@eval_step_by_step begin 4+4 ∈ [1:7...] end) .|> prettycolors
-
-# ╔═╡ d2e1d5ae-2daa-4cf1-8cd9-68bb8c6c81a1
-let
-	executed_count = Ref(0)
-	steps = @eval_step_by_step(begin sqrt(sqrt(increase_counter(16, executed_count))) end) .|> prettycolors
-	
-	(executed_count=executed_count, steps=steps)
-end
-
-# ╔═╡ fe02352b-962a-4ac5-ba40-6b96112235ee
-@eval_step_by_step 1 + 1
-
-# ╔═╡ ba28d507-816f-45c0-b6c0-2f5f4f09855f
-(@eval_step_by_step begin sqrt(sqrt(4)) == 2 end) .|> prettycolors
-
-# ╔═╡ 930f8244-cf25-4c1a-95f6-5c8963559c62
-@macroexpand @eval_step_by_step x == [1,2]
-
-# ╔═╡ 68ba60db-44ad-43e4-b33e-d27696babc99
-@eval_step_by_step sqrt(sqrt(length([1,2])))
-
-# ╔═╡ 807bcd72-26c3-44d3-a295-56874cb51a89
-@eval_step_by_step xasdf = 123
-
-# ╔═╡ 21d4560e-721f-4ed4-9db7-86a8151ab22c
-md"""
-## Displaying objects inside code
-"""
-
-# ╔═╡ 99afc7f4-727c-4277-8311-f2ffa94830ae
-md"""
-#### Slotting
-
-We walk through the expression tree. Whenever we find a `Computed` object, we generate a random key (e.g. `iosjddfo`), we add it to our dictionary (`found`). In the expression, we replace the `Computed` object with a placeholder symbol `__slotiosjddfo__`. We will later be able to match the object to this slot.
-"""
-
-# ╔═╡ 4956526a-daf9-43c9-bff3-ff2446016e2e
-slot!(found, c::Computed) = let
-	k = Symbol("__slot", join(rand('a':'z', 16)), "__")
-	found[k] = c
-	k
-end
-
-# ╔═╡ 84ff6a23-c134-4910-b630-a7ad45f3bf29
-slot!(found, x) = x
-
-# ╔═╡ 318363d0-6d9e-4144-b478-b775f437edaf
-slot!(found, e::Expr) = Expr(e.head, slot!.([found], e.args)...)
-
-# ╔═╡ 67fd07b7-340b-4e24-bc06-e4c85b186872
-slot(e) = let
-	d = Dict{Symbol,Any}()
-	new_e = slot!(d, e)
-	d, new_e
-end
-
-# ╔═╡ c6d5597c-d505-4125-88c4-10415934d2a4
-md"""
-#### SlottedDisplay
-
-We use `print` to turn the expression into source code.
-
-For each line, we regex-search for slot variables, and we split the line around those. The code segments around slots are rendered inside `<pre-ish>` tags (like `<pre>` but inline), and the slots are replaced by [embedded displays](https://github.com/fonsp/Pluto.jl/pull/1126) of the objects.
-"""
-
-# ╔═╡ c877c109-db16-468c-8f3c-8294db859d6d
-begin
-	struct SlottedDisplay
-		d
-		e
-	end
-	SlottedDisplay(expr) = SlottedDisplay(slot(expr)...)
-end
-
-# ╔═╡ 8480d0d7-bdf7-468d-9344-5b789e33921c
-const slotted_code_css = """
-slotted-code {
-	font-family: "JuliaMono", monospace;
-	font-size: .75rem;
-	display: flex;
-	flex-direction: column;
-}
-pre-ish {
-	white-space: pre;
-}
-
-line-like {
-	display: flex;
-	align-items: baseline;
-}
-"""
-
-# ╔═╡ b5763c10-e11c-4389-b6fc-421d2c9682f1
-md"""
-#### Frame viewer
-
-A widget that takes a series of elements and displays them as 'video frames' with a timeline scrubber.
-"""
-
-# ╔═╡ 3d5abd58-02ab-4b91-a7a3-d9068d4df017
-md"""
-#### Macro to test frames
-"""
-
-# ╔═╡ 34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
-
-
-# ╔═╡ f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
-md"""
-# Appendix
-"""
 
 # ╔═╡ 35f63c4e-3583-4ea8-a057-31f18f8a09d6
 md"""
 ## DisplayOnly
 """
+
+# ╔═╡ ef59d0f0-0f02-4089-a49d-53fb0427c3a0
+embed_display(x) = if isdefined(Main, :PlutoRunner) && isdefined(Main.PlutoRunner, :embed_display)
+	# if this package is used inside Pluto, and Pluto is new enough
+	Main.PlutoRunner.embed_display(x)
+else
+	identity(x)
+end
 
 # ╔═╡ 35b2770e-1db6-4327-bf86-c27a4b61dbd3
 function is_inside_pluto(m::Module)::Bool
@@ -802,6 +843,9 @@ function is_inside_pluto(m::Module)::Bool
 		isdefined(m, :PlutoRunner) && parentmodule(m) === Main
 	end
 end
+
+# ╔═╡ 2f6e353d-2cdc-46d6-9727-01b0a6167ca0
+ERROR_ON_UNKNOWN_EXPRESSION_TYPE = is_inside_pluto(@__MODULE__)
 
 # ╔═╡ 22640a2f-ea38-4517-a4f3-7a65e60ffebe
 """
@@ -819,89 +863,14 @@ begin
 		Pkg.instantiate()
 	end
 	import HypertextLiteral: @htl
-	import Test
-end
 
-# ╔═╡ 05f42764-acfe-4370-b85b-ce0e7c4270d0
-begin
-	export @test_nowarn, @test_warn, @test_logs, @test_skip, @test_broken, @test_throws, @test_deprecated
+	import Test: Test, @test_warn, @test_nowarn, @test_logs, @test_skip, @test_broken, @test_throws, @test_deprecated
 	
-	var"@test_warn" = Test.var"@test_warn"
-	var"@test_nowarn" = Test.var"@test_nowarn"
-	var"@test_logs" = Test.var"@test_logs"
-	var"@test_skip" = Test.var"@test_skip"
-	var"@test_broken" = Test.var"@test_broken"
-	var"@test_throws" = Test.var"@test_throws"
-	var"@test_deprecated" = Test.var"@test_deprecated"
+	export @test_nowarn, @test_warn, @test_logs, @test_skip, @test_broken, @test_throws, @test_deprecated
 end
-
-# ╔═╡ b6e8a170-12cc-4d97-905d-274e2609bfd8
-function test(expr, extra_args...)
-	step_by_step
-	Test.test_expr!("", expr, extra_args...)
-		
-	quote
-		local expr_raw = $(QuoteNode(expr))
-		try			
-			steps = $(step_by_step(expr))
-
-			result = unwrap_computed(last(steps))
-			
-			if result === true
-				CorrectCall(expr_raw, steps)
-			# elseif result === false
-			# 	WrongCall(expr_raw, steps)
-			else
-				WrongCall(expr_raw, steps)
-			end
-		catch e
-			rethrow(e)
-			# Error(expr_raw, e)
-		end
-	end
-end
-
-# ╔═╡ 0fcc6cb0-2711-4609-9bf3-634cf9407840
-div(x; class="", style="") = @htl("<div class=$(class) style=$(style)>$(x)</div>")
-
-# ╔═╡ 69200d7c-b7bc-4c7e-a9a1-5e26979179a3
-div(; class="", style="") = x -> @htl("<div class=$(class) style=$(style)>$(x)</div>")
 
 # ╔═╡ 872b4877-30dd-4a92-a3c8-69eb50675dcb
 preish(x) = @htl("<pre-ish>$(x)</pre-ish>")
-
-# ╔═╡ ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
-function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
-
-	d, e = sd.d, sd.e
-	
-	s = sprint() do iobuffer
-		print(IOContext(iobuffer, io), e |> remove_linenums)
-	end
-	
-	lines = split(s, "\n")
-	
-	r = r"\_\_slot[a-z]{16}\_\_"
-	embed_display
-	h = @htl("""<slotted-code>
-		$(
-	map(lines) do l
-		keys = [Symbol(m.match) for m in eachmatch(r, l)]
-		rest = split(l, r; keepempty=true)
-		
-		result = vcat((
-			[(isempty(r) ? @htl("") : preish(r)), embed_display(d[k].x)]
-			for (r,k) in zip(rest, keys)
-			)...)
-		
-		push!(result, preish(last(rest)))
-		
-		@htl("<line-like>$(result)</line-like>")
-	end
-	)
-		</slotted-code>""")
-	show(io, m, h)
-end
 
 # ╔═╡ e968fc57-d850-4e2d-9410-8777d03b7b3c
 function frames(fs::Vector)
@@ -960,25 +929,17 @@ with_slotted_css(x) = @htl("""
 	</style>
 	""")
 
-# ╔═╡ 326f7661-3482-4bf2-a97b-57cc7ac60ee2
-macro visual_debug(expr)
-	frames
-	SlottedDisplay
-	var"@eval_step_by_step"
-	with_slotted_css
-	quote
-		@eval_step_by_step($(expr)) .|> SlottedDisplay |> frames |> with_slotted_css
-	end
-end
+# ╔═╡ d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
+ex1 = @skip_as_script :(first([56,sqrt(9)]))
 
 # ╔═╡ 69bfb438-7ecf-4f9b-8bc4-51e07aa46ef1
 @skip_as_script Core.eval(Module(), ex1)
 
+# ╔═╡ a3c41025-2f4a-4f9c-8577-72e4b7abbb98
+ex2_inner = @skip_as_script ex1.args[2]
+
 # ╔═╡ 3e79ff61-6532-4879-9402-86473aa7d960
 ex2_inner_result = @skip_as_script Core.eval(Module(), ex2_inner)
-
-# ╔═╡ 275c5f57-623d-439f-b09d-f7c745e0bed6
-ex2 = Expr(:call, :first, ex2_inner_result)
 
 # ╔═╡ 38e54516-cdf4-4c1d-815b-68e1e7a7f6f7
 ex3 = Expr(:call, :first, Computed(ex2_inner_result))
@@ -986,21 +947,8 @@ ex3 = Expr(:call, :first, Computed(ex2_inner_result))
 # ╔═╡ 9bed78b6-5a8f-44ce-ab66-cab685daf264
 unwrap_computed(ex3)
 
-# ╔═╡ 8ef356ea-7d54-43e6-a936-7c8be04c595f
-@skip_as_script onestep_light(quote
-		1+2
-		2+3
-		4+5
-		sqrt(sqrt(sqrt(5)))
-	end) .|> prettycolors
-
-# ╔═╡ 4edf747b-3838-4315-a397-e452ac9b5465
-@skip_as_script onestep_light(quote
-		(1+2) + (7-6)
-		2+3
-		4+5
-		sqrt(sqrt(sqrt(5)))
-	end |> remove_linenums) .|> slot
+# ╔═╡ 275c5f57-623d-439f-b09d-f7c745e0bed6
+ex2 = @skip_as_script Expr(:call, :first, ex2_inner_result)
 
 # ╔═╡ d414f840-4952-4de5-a565-7fdc81a94817
 "The opposite of `@skip_as_script`"
@@ -1198,7 +1146,7 @@ toc() = HTML("""
 	""")
 
 # ╔═╡ c763ed72-82c9-445c-a8f7-a0c40982e4d9
-toc()
+@skip_as_script toc()
 
 # ╔═╡ 955705f9-c90d-495d-86b4-5f3b5bc9fc8e
 begin
@@ -1226,16 +1174,16 @@ end
 Dump(x; maxdepth=8) = sprint(io -> dump(io, x; maxdepth=maxdepth)) |> Text
 
 # ╔═╡ a6709e08-964d-46ea-9813-2c70a834824b
-Dump(ex1)
+@skip_as_script Dump(ex1)
 
 # ╔═╡ 10803c0d-d0a5-45c5-b7ef-9659e441df69
-Dump(ex2)
+@skip_as_script Dump(ex2)
 
 # ╔═╡ 411271a6-4236-45e2-ab34-f26410108821
 Dump(ex3)
 
-# ╔═╡ daee414b-3e3c-4e2a-a25a-429a1e7275d5
-Dump(Ref(1))
+# ╔═╡ ae82a36c-16a0-4bc3-8c0a-eff4277f1139
+Dump(:(:(Base.show)))
 
 # ╔═╡ 6c0156a9-7281-4326-9e1f-989efa73bb7b
 begin
@@ -1259,32 +1207,6 @@ end;
 # ╔═╡ 6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
 plot(args...; kwargs...) = Hannes
 
-# ╔═╡ b4b317d7-bed1-489c-9650-8d336e330689
-rs = @eval_step_by_step(begin
-		(1+2) + (7-6)
-		plot(2000 .+ 30 .* rand(2+2))
-		4+5
-		sqrt(sqrt(sqrt(5)))
-	end) .|> SlottedDisplay
-
-# ╔═╡ 93ed973f-daf6-408b-9d4b-d53495418610
-@bind rindex Slider(eachindex(rs))
-
-# ╔═╡ dea898a0-1904-4d09-ad0b-6915008fe946
-rs[rindex]
-
-# ╔═╡ 74c19786-1ba7-4865-a993-590a779ae564
-frames(rs)
-
-# ╔═╡ a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
-@visual_debug begin
-	(1+2) + (7-6)
-	plot(2000 .+ 30 .* rand(2+2))
-	4+5
-	sqrt(sqrt(sqrt(5)))
-	md"# Wow"
-end
-
 # ╔═╡ 5b70aaf1-9623-4f55-b055-4263ed8be31d
 Floep = let
 	url = "https://user-images.githubusercontent.com/6933510/116753861-142ebe00-aa08-11eb-8ce8-684af1098935.jpeg"
@@ -1295,12 +1217,298 @@ end;
 # ╔═╡ bf2abe01-6ae0-4066-8704-12f64e04511b
 friends = Any[Hannes, Floep];
 
+# ╔═╡ 8d3df0c0-eb48-4dae-97a8-8c01f0b0a34b
+md"## Pretty printing code"
+
+# ╔═╡ dbd41240-9fc4-4e25-8b25-2b68afa679f2
+struct EscapeExpr
+	expr
+end
+
+# ╔═╡ 91e3e2b4-7966-42ee-8a45-31d6c5f08121
+function Base.show(io::IO, val::EscapeExpr)
+	print(io, "\$(esc(")
+	print(io, val.expr)
+	print(io, "))")
+end
+
+# ╔═╡ 7cc07d1b-7757-4428-8028-dc892bf05f2f
+move_escape_calls_up(e::Expr) = begin
+	
+	args = move_escape_calls_up.(e.args)
+	if all(x -> Meta.isexpr(x, :escape, 1), args)
+		Expr(:escape, Expr(e.head, (arg.args[1] for arg in args)...))
+	else
+		Expr(e.head, args...)
+	end
+end
+
+# ╔═╡ e0837338-e657-4bdc-ae91-1de9224da78d
+move_escape_calls_up(x) = x
+
+# ╔═╡ 64df4678-0721-4911-8289-fb18f55e6657
+escape_syntax_to_esc_call(e::Expr) = if e.head === :escape
+	EscapeExpr(e.args[1])
+else
+	Expr(e.head, (escape_syntax_to_esc_call(x) for x in e.args)...)
+end
+
+# ╔═╡ 58845ff9-821b-45d4-b5ec-96e1949bb277
+escape_syntax_to_esc_call(x) = x
+
+# ╔═╡ 4d5f44e4-85e9-4985-9b76-73be5e097186
+remove_linenums(e::Expr) = if e.head === :macrocall
+	Expr(e.head, (remove_linenums(x) for x in e.args)...)
+else
+	Expr(e.head, (remove_linenums(x) for x in e.args if !(x isa LineNumberNode))...)
+end
+
+# ╔═╡ dd495e00-d74d-47d4-a5d5-422fb147ec3b
+remove_linenums(x) = x
+
+# ╔═╡ ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
+function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
+
+	d, e = sd.d, sd.e
+	
+	s = sprint() do iobuffer
+		print(IOContext(iobuffer, io), e |> remove_linenums)
+	end
+	
+	lines = split(s, "\n")
+	
+	r = r"\_\_slot[a-z]{16}\_\_"
+	embed_display
+	h = @htl("""<slotted-code>
+		$(
+	map(lines) do l
+		keys = [Symbol(m.match) for m in eachmatch(r, l)]
+		rest = split(l, r; keepempty=true)
+		
+		result = vcat((
+			[(isempty(r) ? @htl("") : preish(r)), embed_display(d[k].x)]
+			for (r,k) in zip(rest, keys)
+			)...)
+		
+		push!(result, preish(last(rest)))
+		
+		@htl("<line-like>$(result)</line-like>")
+	end
+	)
+		</slotted-code>""")
+	show(io, m, h)
+end
+
+# ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+expr_to_str(e, mod=@__MODULE__()) = let
+	Computed
+	sprint() do io
+		Base.print(IOContext(io, :module => @__MODULE__), escape_syntax_to_esc_call(move_escape_calls_up(remove_linenums(e))))
+	end
+end
+
+# ╔═╡ ef6fc423-f1b1-4dcb-a059-276121391bc6
+prettycolors(e) = Markdown.MD([Markdown.Code("julia", expr_to_str(e))])
+
+# ╔═╡ 235d5929-0d87-49ac-ae35-b45bb39804df
+[:(1 + $(lonely_function)())] .|> prettycolors
+
+# ╔═╡ 0f31dd2e-0331-4d4c-8db5-9ce188cd3730
+[lens_to_getter(:source, [FieldLens(:x), PropertyLens(:y)])] .|> prettycolors
+
+# ╔═╡ cecba3e6-98e8-408a-97dd-96b67c4f42cf
+[lens_to_setter(:dest, [FieldLens(:x), PropertyLens(:y)], :value)] .|> prettycolors
+
+# ╔═╡ 7e6c2162-97e9-4835-b650-52c9723c327f
+md"## Utils"
+
+# ╔═╡ 1ac164c8-88fc-4a87-a194-60ef616fb399
+flatmap(args...) = vcat(map(args...)...)
+
+# ╔═╡ 1c1b64b1-107e-4d43-9ce2-569c3034017e
+function expr_lenses_for_quoted(e::Expr, code_loweredish_with_lenses)::Frames
+	if e.head == :$
+		frames = code_loweredish_with_lenses(e.args[1])
+		apply_lens_to_frames([FieldLens(:args), PropertyLens(1)], frames)
+	else
+		argument_frames = flatmap(enumerate(e.args)) do (i, arg)
+			frames = expr_lenses_for_quoted(arg, code_loweredish_with_lenses)
+			apply_lens_to_frames([FieldLens(:args), PropertyLens(i)], frames)
+		end
+	end
+end
+
+# ╔═╡ ce90612e-ffc1-4e30-9d89-531f11fd75eb
+"""
+    code_loweredish_with_lenses(e::Expr)::Vector{ExprWithLens}
+
+Transforms an expression into a set of list of expressions that would be executed one after eachother. It gives every expression a lens referencing where it is inside the original expression. This way you can execute each expr, and then put the result in the expression to create the step-by-step execution.
+
+It doesn't "dedupe" the expressions, so when you run the last expression in the list (which will just be the original expression), it doesn't take advantage of any previously run expressions in the same list. You'll have to do that later, manually.
+
+In PlutoTest this is done with [TODO](@ref)
+"""
+function code_loweredish_with_lenses(e::Expr)::Frames
+	if e.head == :kw
+		frames = code_loweredish_with_lenses(e.args[2])
+		apply_lens_to_frames([FieldLens(:args), PropertyLens(2)], frames)
+	elseif e.head == :(=)
+		frames = code_loweredish_with_lenses(e.args[2])
+		lens = [FieldLens(:args), PropertyLens(2)]
+		[
+			apply_lens_to_frames(lens, frames)...,
+			ExprWithLens(expr=e.args[2], lens=lens, expr_to_show=e),
+			# It now adds the whole `x = ...` expression as well,
+			# which doesn't look that good in the output...
+			# But we'll have to live with it for now
+		]
+	elseif e.head == :parameters
+		flatmap(enumerate(e.args)) do (i, arg)
+			frames = code_loweredish_with_lenses(arg)
+			apply_lens_to_frames([FieldLens(:args), PropertyLens(i)], frames)
+		end
+	elseif e.head == :quote
+		frames = expr_lenses_for_quoted(e.args[1], code_loweredish_with_lenses)
+		argument_frames = apply_lens_to_frames(
+			[FieldLens(:args), PropertyLens(1)],
+			frames
+		)
+		[argument_frames..., ExprWithLens(expr=e, lens=[])]
+	elseif e.head == :...
+		frames = code_loweredish_with_lenses(e.args[1])
+		apply_lens_to_frames([FieldLens(:args), PropertyLens(1)], frames)
+	elseif e.head == :macrocall || e.head == :ref
+		[ExprWithLens(expr=e, lens=[])]
+	elseif e.head == :call
+		# With calls we don't want to dive into the callee if it is just a symbol
+		# (This would expand everything like x == y to #function(:==)(x,y) which
+		# is definitely not what we want)
+		possibly_callee_frames = if e.args[begin] isa Symbol
+			[]
+		else
+			frames = code_loweredish_with_lenses(e.args[begin])
+			apply_lens_to_frames([FieldLens(:args), PropertyLens(firstindex(e.args))], frames)
+		end
+		
+		argument_frames = flatmap(enumerate(e.args[begin+1:end])) do (i, arg)
+			frames = code_loweredish_with_lenses(arg)
+			@info "III" i arg
+			apply_lens_to_frames([FieldLens(:args), PropertyLens(i+1)], frames)
+		end
+		
+		[possibly_callee_frames..., argument_frames..., ExprWithLens(expr=e, lens=[])]
+
+	elseif (
+		e.head == :begin ||
+		e.head == :block ||
+		e.head == :vect ||
+		e.head == :string ||
+		e.head == :. ||
+		e.head == :tuple ||
+		e.head == :let
+	)
+		argument_frames = flatmap(enumerate(e.args)) do (i, arg)
+			frames = code_loweredish_with_lenses(arg)
+			apply_lens_to_frames([FieldLens(:args), PropertyLens(i)], frames)
+		end
+		
+		[argument_frames..., ExprWithLens(expr=e, lens=[])]
+	elseif (
+		e.head == :if ||
+		e.head == :elseif ||
+		e.head == :else ||
+		e.head == :&& ||
+		e.head == :|| ||
+		e.head == :try ||
+		e.head == :catch ||
+		e.head == :finally
+	)
+		if ERROR_ON_UNKNOWN_EXPRESSION_TYPE
+			error("Conditional statements (:$(e.head)) are not yet supported")
+		else
+			[ExprWithLens(expr=e, lens=[])]
+		end
+	else
+		if ERROR_ON_UNKNOWN_EXPRESSION_TYPE
+			error("code_loweredish_with_lenses called with unknown expression type (:$(e.head))")
+		else
+			[ExprWithLens(expr=e, lens=[])]
+		end
+	end
+end;
+
+# ╔═╡ e1c306e3-0a47-4149-a9fb-ec7ab380fa11
+function step_by_step(expr)
+	build_step_by_step_blocks
+	
+	lowered = code_loweredish_with_lenses(expr)
+	expr_ref_lens = gensym("expr_ref")
+	steps_lens = gensym("steps")
+	quote
+		begin
+			expr = $(QuoteNode(expr))
+			$steps_lens = Any[expr]
+			$expr_ref_lens = Ref{Any}(expr)
+			$(build_step_by_step_blocks(lowered;
+				expr_ref_lens=expr_ref_lens,
+				steps_lens=steps_lens,
+			)...)
+			$steps_lens
+		end
+	end
+end
+
+# ╔═╡ b6e8a170-12cc-4d97-905d-274e2609bfd8
+function test(expr, extra_args...)
+	step_by_step
+	Test.test_expr!("", expr, extra_args...)
+		
+	quote
+		local expr_raw = $(QuoteNode(expr))
+		try			
+			steps = $(step_by_step(expr))
+
+			result = unwrap_computed(last(steps))
+			
+			if result === true
+				CorrectCall(expr_raw, steps)
+			# elseif result === false
+			# 	WrongCall(expr_raw, steps)
+			else
+				WrongCall(expr_raw, steps)
+			end
+		catch e
+			@info "e" e
+			rethrow(e)
+			# Error(expr_raw, e)
+		end
+	end
+end
+
 # ╔═╡ 9c3f6eab-b1c3-4607-add8-d6d7e468c11a
 begin
 	export @test
 	
-	macro test(expr...)
-		test(expr...)
+	macro test(main_expr, expr...)
+		test;
+		
+		source = QuoteNode(__source__)
+		orig_expr = QuoteNode(main_expr)
+		quote
+			pluto_result, julia_test_result = try
+				result = $(test(main_expr, expr...))
+				(result, Test.Returned(result isa CorrectCall, "", $(source)))
+			catch err
+				rethrow(err)
+				(err, Test.Threw(err, Base.catch_stack(), $(source)))
+			end
+
+			try
+				Test.do_test(julia_test_result, $(orig_expr))
+			catch; end
+			
+			pluto_result
+		end
 	end
 	
 	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
@@ -1319,7 +1527,7 @@ begin
 			(isa(call,CorrectCall) ? "correct" : "wrong"),
 			(isa(call,Pass) ? "pass" : "fail"),
 			infix ? "infix-operator" : "prefix-operator",
-			]
+		]
 		
 		result = @htl("""
 		
@@ -1408,8 +1616,8 @@ begin
 			$(frames(SlottedDisplay.( call.steps)))
 		</div>
 		<style>
-		$(pluto_test_css)
-		$(slotted_code_css)
+		$(pluto_test_css.code)
+		$(slotted_code_css.code)
 		</style>
 		
 		
@@ -1451,12 +1659,6 @@ end
 # ╔═╡ fe7f8cce-a706-476d-8680-a2fe793b474f
 @test always_false(rand(2), rand(2),123)
 
-# ╔═╡ 1872f785-1ae5-43ea-bce1-6c5cd893f3a8
-@test !!always_false(rand(2), rand(2),123; r=123)
-
-# ╔═╡ 5570972e-9309-4458-99a6-ea718ec2c3ab
-@test always_false([1,2,3]...)
-
 # ╔═╡ 8d340983-ea07-4038-872f-22a165003ed2
 @test isless(2+2,1)
 
@@ -1471,11 +1673,6 @@ end
 
 # ╔═╡ 064e28de-0c22-48b5-b427-6eb343880287
 @test isempty((1:k) .^ 2)
-
-# ╔═╡ 3a6a6ee1-c619-4044-b9b1-68e5ae9d2463
-map(1:10) do i
-	@test sqrt(i) < 3 && always_false()
-end
 
 # ╔═╡ be93a6f4-b626-43db-a2fe-4e754e79c030
 @test isempty([1,sqrt(2)])
@@ -1507,26 +1704,14 @@ end
 # ╔═╡ cbab6234-5821-4a89-ab4e-e030d3494711
 @test 2 * 5 > 0.19
 
-# ╔═╡ ac02b12a-3982-4526-a51c-0bf85198b81b
-var"@test"; macroexpand(@__MODULE__, :(@test x == [1,2+i]); recursive=false) |> prettycolors
-
 # ╔═╡ bb770f3f-72dd-4a71-8d71-9e773224df05
 t = @test always_false(rand(20), rand(20),123)
 
-# ╔═╡ 22a33c8c-e07f-445e-9d8d-a676f704ec45
-@test begin
-	(1+2) - (3+4)
-	false
-end
+# ╔═╡ ceb8dc07-dc1b-4b76-b08f-d65f3754df3b
+@test x = 3 - sqrt(16)
 
 # ╔═╡ 176f39f1-fa36-4ce1-86ba-76248848a834
-@test (@test always_false(rand(30),123)) isa Fail
-
-# ╔═╡ 8150cb7e-b2e2-4ee8-a475-db4454c954f0
-embed_display(@test false)
-
-# ╔═╡ d9b35d00-64c7-472c-8890-8db5efc487b1
-@test error("Wow")
+@skip_as_script @test (@test always_false(rand(30),123)) isa Fail
 
 # ╔═╡ 716bba60-bfbb-48a4-8924-8bf4e8958cb1
 @test always_false("asd"*"asd","asd","asd"*" asd","asd","asd"*"asd","asd","asd"*"asd","asd","asd"*"asd","asd","asd"*"asd","asd","asd"*"asd","asd")
@@ -1537,14 +1722,149 @@ embed_display(@test false)
 # ╔═╡ 9741e0d3-d61d-48f4-a80d-b8b24e896190
 @test [1, sqrt(sqrt(2)), 8^7]
 
-# ╔═╡ 17f0b235-bf0f-4ace-aaf1-ef3e5d325aad
-let
-	asd12 = 10
-	@test asd12 == 10
+# ╔═╡ ecee13ed-7fad-4d1c-938e-02a1627cd4ff
+@test error("whaaat")
+
+# ╔═╡ d2e1d5ae-2daa-4cf1-8cd9-68bb8c6c81a1
+@test let
+	executed_count = Ref(0)
+	steps = @test(begin
+		sqrt(sqrt(increase_counter(16, executed_count)))
+	end)
+	
+	executed_count[] == 2
 end
 
-# ╔═╡ de62537b-a428-48d3-a866-151127b3255b
+# ╔═╡ dd69966b-041f-4a87-925a-2925496ca280
+@test :((Base.show + 1) + 5)
 
+# ╔═╡ 58fd43c1-4775-431f-a835-43972b4da6c4
+@test (10 + 1) + 5
+
+# ╔═╡ 40902263-04b9-4022-b156-a19bdb0b568c
+[@macroexpand1 @test x = 3 - sqrt(16)] .|> prettycolors
+
+# ╔═╡ 6e9ba6e0-ec85-4e5e-9ae2-358cf45ce18c
+@test x = 3 - sqrt(16)
+
+# ╔═╡ a661e172-6afb-42ff-bd43-bb5b787ee5ed
+macro eval_step_by_step(e)
+	step_by_step(e)
+end
+
+# ╔═╡ 3fccae0c-ab69-4bc8-858b-ede886c45e32
+(@eval_step_by_step sqrt(sqrt(4)) + 2) .|> prettycolors
+
+# ╔═╡ c46d5246-e62f-4f2e-9e3a-0608c8c48b2e
+(@eval_step_by_step 4+4 ∈ [1:7...]) .|> prettycolors
+
+# ╔═╡ 7cac2b5d-4de9-469c-9158-0f935a27ed2d
+(@eval_step_by_step is_good_boy(first(friends))) .|> prettycolors
+
+# ╔═╡ d7dc79e6-1f58-4414-aeef-667bdb0dd200
+macro pretty_step_by_step(e)
+	eval_by_step = var"@eval_step_by_step"
+	quote
+		$(Expr(:macrocall, eval_by_step, __source__, e)) .|> prettycolors
+	end
+end
+
+# ╔═╡ 8150cb7e-b2e2-4ee8-a475-db4454c954f0
+@pretty_step_by_step embed_display(@test sqrt(sqrt(16)) == 2)
+
+# ╔═╡ bc6c6555-95e9-4515-ab98-422551b846d0
+let
+	i = 10
+	@pretty_step_by_step i * 2
+end
+
+# ╔═╡ ba4a5762-33da-40e6-94fa-cca9befc6d5a
+example_equals = @skip_as_script let
+	@pretty_step_by_step sqrt(sqrt(16)) == 4
+end
+
+# ╔═╡ 9101631b-81ca-4c7c-94da-81d9e106df78
+example_call_spread = @skip_as_script let
+	@pretty_step_by_step max([1,2,3]...) != min([1,2,3]...)
+end
+
+# ╔═╡ 3f0e5a49-5eec-42cd-bd2c-254b277840bf
+example_show_variable_value = @skip_as_script let
+	x = [1,2,3]
+	@pretty_step_by_step x == [1,2,3]
+end
+
+# ╔═╡ 1aa319c8-5e1d-4dd9-ae22-ad99e46e7b4d
+example_keyword_arguments = @skip_as_script let
+	@pretty_step_by_step round(sqrt(2), digits=Int(sqrt(16)))
+end
+
+# ╔═╡ 605d2481-23be-4ad9-82c9-e375b7be8669
+# Seems very similar to `example_keyword_arguments`, but this one
+# has a `;`, which makes a liiiitle bit different AST
+example_keyword_arguments_explicit = @skip_as_script let
+	@pretty_step_by_step round(sqrt(2); digits=Int(sqrt(16)))
+end
+
+# ╔═╡ 68ba60db-44ad-43e4-b33e-d27696babc99
+@pretty_step_by_step sqrt(sqrt(length([1,2])))
+
+# ╔═╡ 807bcd72-26c3-44d3-a295-56874cb51a89
+@pretty_step_by_step xasdf = 123
+
+# ╔═╡ 60a398c9-9fe8-4b90-b863-1568183641d9
+example_returned_function = @skip_as_script let
+	function_that_returns_function = () -> function X() 10 end
+	@pretty_step_by_step function_that_returns_function()() == 10
+end
+
+# ╔═╡ b4b317d7-bed1-489c-9650-8d336e330689
+rs = @eval_step_by_step(begin
+		(1+2) + (7-6)
+		plot(2000 .+ 30 .* rand(2+2))
+		4+5
+		sqrt(sqrt(sqrt(5)))
+	end) .|> SlottedDisplay
+
+# ╔═╡ 93ed973f-daf6-408b-9d4b-d53495418610
+@bind rindex Slider(eachindex(rs))
+
+# ╔═╡ dea898a0-1904-4d09-ad0b-6915008fe946
+rs[rindex]
+
+# ╔═╡ 74c19786-1ba7-4865-a993-590a779ae564
+frames(rs)
+
+# ╔═╡ 326f7661-3482-4bf2-a97b-57cc7ac60ee2
+macro visual_debug(expr)
+	frames
+	SlottedDisplay
+	var"@eval_step_by_step"
+	with_slotted_css
+	quote
+		@eval_step_by_step($(expr)) .|> SlottedDisplay |> frames |> with_slotted_css
+	end
+end
+
+# ╔═╡ a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
+@visual_debug begin
+	(1+2) + (7-6)
+	plot(2000 .+ 30 .* rand(2+2))
+	4+5
+	sqrt(sqrt(sqrt(5)))
+	md"#### Wow"
+end
+
+# ╔═╡ 03579ca6-d04b-4ba7-829c-8cf3c3fdbafa
+build_step_by_step_blocks(code_loweredish_with_lenses(:(sqrt(sqrt(1))))) .|> prettycolors
+
+# ╔═╡ 3650d813-8a6c-4cd0-bb68-8b384e8211d8
+build_step_by_step_blocks(code_loweredish_with_lenses(quote
+	@test 1 + 1
+end)) .|> prettycolors
+
+# ╔═╡ 6e1f66f2-9b73-4bb6-bc23-b4483ddfca97
+code_loweredish_with_lenses(eee)
 
 # ╔═╡ Cell order:
 # ╟─ab02837b-79ec-40d7-bff1-c1d2dd7362ef
@@ -1561,7 +1881,6 @@ end
 # ╟─191f1f04-18d4-485b-af8b-a2f073b7043b
 # ╟─ec1fd70a-d92a-4688-98b2-135879f07141
 # ╠═cf314b21-3f4f-4637-b1ce-ec1d5d5af966
-# ╠═80b2fb3f-94b2-4024-94ff-d111a249c8b0
 # ╠═c763ed72-82c9-445c-a8f7-a0c40982e4d9
 # ╠═9d49ea50-8158-4d8b-97af-edba1f7dc38b
 # ╠═eab4ba31-c787-46dd-8024-693eca7fd1a0
@@ -1571,8 +1890,6 @@ end
 # ╠═7c6ce205-053d-434c-b5b1-500babb8ec02
 # ╠═a6f82260-3519-4254-a21e-abc7bb19ec4e
 # ╠═fe7f8cce-a706-476d-8680-a2fe793b474f
-# ╠═1872f785-1ae5-43ea-bce1-6c5cd893f3a8
-# ╠═5570972e-9309-4458-99a6-ea718ec2c3ab
 # ╠═8d340983-ea07-4038-872f-22a165003ed2
 # ╠═ea5a4fc0-db62-41dd-9600-a21d4eabf822
 # ╠═c369b4b5-2fcf-4029-a1f6-352120b2fc4b
@@ -1580,16 +1897,16 @@ end
 # ╠═98992db9-4f14-4aa6-a7c5-477622266112
 # ╠═8360d1bc-b1f4-4263-a042-724cbd120227
 # ╠═064e28de-0c22-48b5-b427-6eb343880287
-# ╠═3a6a6ee1-c619-4044-b9b1-68e5ae9d2463
 # ╠═be93a6f4-b626-43db-a2fe-4e754e79c030
 # ╠═e9370ce7-24ff-475a-ae47-c1de3eaeac7a
 # ╟─17bd5cd9-212f-4656-ab79-590dd6c64ff8
 # ╟─539e2c38-993b-4b3b-8aa0-f02d46d79839
 # ╟─3d3f3592-e056-4e7b-8896-a75e5b5dcad6
 # ╠═1aa24b1c-e8ca-4de7-b614-7a3f02b4833d
-# ╠═8a2e8348-49cf-4855-b5b3-cdee33e5ed67
-# ╠═42671258-07a0-4015-8f47-4b3032595f08
-# ╠═05f42764-acfe-4370-b85b-ce0e7c4270d0
+# ╠═b0ab9327-8240-4d34-bdd9-3f8f5117bb29
+# ╟─1e619ca9-e00f-46d0-b327-85b33929787f
+# ╟─8a2e8348-49cf-4855-b5b3-cdee33e5ed67
+# ╟─42671258-07a0-4015-8f47-4b3032595f08
 # ╟─0d70962a-3880-4dee-a439-35068d019f5a
 # ╠═113cc425-e224-4f77-bfbd-ef4eb1d1ed70
 # ╠═6188f559-bcab-4da6-84b2-a3fe522a5c3c
@@ -1606,31 +1923,15 @@ end
 # ╠═e1c306e3-0a47-4149-a9fb-ec7ab380fa11
 # ╠═b6e8a170-12cc-4d97-905d-274e2609bfd8
 # ╟─bfe4dc61-9160-4c7e-8897-9c723b309adc
-# ╠═ac02b12a-3982-4526-a51c-0bf85198b81b
 # ╠═bb770f3f-72dd-4a71-8d71-9e773224df05
-# ╠═22a33c8c-e07f-445e-9d8d-a676f704ec45
+# ╠═ceb8dc07-dc1b-4b76-b08f-d65f3754df3b
 # ╠═176f39f1-fa36-4ce1-86ba-76248848a834
 # ╠═8150cb7e-b2e2-4ee8-a475-db4454c954f0
-# ╠═d9b35d00-64c7-472c-8890-8db5efc487b1
 # ╠═716bba60-bfbb-48a4-8924-8bf4e8958cb1
-# ╠═4bc1b7a4-0a36-4a07-b7ee-3d5be50350e1
-# ╠═3b2e8f55-1d4b-4a36-83f6-26becbd79e4b
 # ╠═7c1aa057-dff2-48cd-aad5-1bbc1c0a729b
-# ╠═ec2ed42c-1227-4e0d-b642-20e6f3503d2a
 # ╠═9741e0d3-d61d-48f4-a80d-b8b24e896190
+# ╠═ecee13ed-7fad-4d1c-938e-02a1627cd4ff
 # ╠═9c3f6eab-b1c3-4607-add8-d6d7e468c11a
-# ╠═1ac164c8-88fc-4a87-a194-60ef616fb399
-# ╠═98ac4c36-49c7-4f65-982d-0b8bf6c372c0
-# ╠═0fcc6cb0-2711-4609-9bf3-634cf9407840
-# ╠═69200d7c-b7bc-4c7e-a9a1-5e26979179a3
-# ╠═ea73a35e-a34f-4708-acc1-858f2466e9ba
-# ╠═b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
-# ╠═ef6fc423-f1b1-4dcb-a059-276121391bc6
-# ╠═4d5f44e4-85e9-4985-9b76-73be5e097186
-# ╠═dd495e00-d74d-47d4-a5d5-422fb147ec3b
-# ╟─a83a6a4c-664c-46fa-a07f-81088493dc35
-# ╟─5cb03161-2cbc-4080-ba59-f94efd3b620c
-# ╟─0611a36b-b4be-4b17-a485-7c4a8fa04927
 # ╟─dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 # ╠═d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 # ╠═a6709e08-964d-46ea-9813-2c70a834824b
@@ -1654,16 +1955,89 @@ end
 # ╟─2c1b906d-71b9-430e-83ed-d4c8c0018632
 # ╠═3fccae0c-ab69-4bc8-858b-ede886c45e32
 # ╠═c46d5246-e62f-4f2e-9e3a-0608c8c48b2e
-# ╠═7dc21aa9-252f-4654-95c8-fe297f0d6021
+# ╠═7cac2b5d-4de9-469c-9158-0f935a27ed2d
 # ╠═03579ca6-d04b-4ba7-829c-8cf3c3fdbafa
-# ╠═302c1fab-a358-4a5f-a3fb-4f26a17df4f6
+# ╠═b46b02b7-242a-48bf-bac8-8a3b6474384b
+# ╠═235d5929-0d87-49ac-ae35-b45bb39804df
 # ╟─7db64b02-8f64-4146-bf77-ef94cb45aae0
+# ╠═886c8080-cd29-4c72-898b-4fbd3a988e4d
 # ╠═d2e1d5ae-2daa-4cf1-8cd9-68bb8c6c81a1
-# ╠═83517988-08da-4031-8d51-50d79b48b73a
+# ╠═bc6c6555-95e9-4515-ab98-422551b846d0
 # ╠═3650d813-8a6c-4cd0-bb68-8b384e8211d8
+# ╠═ae82a36c-16a0-4bc3-8c0a-eff4277f1139
+# ╠═dd69966b-041f-4a87-925a-2925496ca280
+# ╠═58fd43c1-4775-431f-a835-43972b4da6c4
+# ╟─ec6f1b07-d026-45ca-996d-be7693664cd7
+# ╟─dadf1c50-6588-4345-a240-69a72336c7cd
+# ╠═c335fea6-6bf5-489f-9218-de67e45c38a8
+# ╟─a29d5277-e97a-4cca-8e31-8037f9cfdd80
+# ╟─4f7aac13-9e49-4b2b-8d78-53f583f6130a
 # ╠═f5d9a4c5-300f-4dae-8507-346ec0b74632
-# ╠═907543c6-b7ed-4521-af21-d6fb86ce4518
-# ╠═fe02352b-962a-4ac5-ba40-6b96112235ee
+# ╟─74929fa6-d1f7-41cd-ab55-48f35d5fbf28
+# ╠═2f6e353d-2cdc-46d6-9727-01b0a6167ca0
+# ╠═17dea9e5-84ea-4476-a318-cc475043c83b
+# ╠═5e66e59b-fdb8-4373-b231-097b0227dc5c
+# ╠═40902263-04b9-4022-b156-a19bdb0b568c
+# ╠═779c75cf-b35d-439c-87b7-b42740d2c870
+# ╠═6e9ba6e0-ec85-4e5e-9ae2-358cf45ce18c
+# ╠═67ad5781-e8bd-4f13-a03e-dcc5773574a0
+# ╠═c2e3377d-a456-40a1-b904-d285d47b50c6
+# ╠═37e2d966-0f46-4b64-bb3a-c057e344fa02
+# ╠═6e1f66f2-9b73-4bb6-bc23-b4483ddfca97
+# ╠═bcff728d-0781-44ce-8033-9f642207a475
+# ╠═ce90612e-ffc1-4e30-9d89-531f11fd75eb
+# ╟─0a3f5c6c-6e1b-458c-bf91-523a0b639b41
+# ╟─43fe89d7-f33e-4dfa-853e-327e981feb1e
+# ╟─fc000550-3053-483e-bc41-6aed22c3999c
+# ╟─3f11ca4c-dd06-47c9-92e2-cb97c18a06db
+# ╟─b155d336-f746-4c82-8206-ab1a49cedea8
+# ╟─221aa13b-aa25-4145-8076-da77432364bb
+# ╟─2a514f2f-79c8-4b0d-be8a-170f3386d5d5
+# ╟─9fb4d52d-77f2-4032-a769-6d5e60be43bf
+# ╟─1c1b64b1-107e-4d43-9ce2-569c3034017e
+# ╟─cade56ad-312e-40cf-bcda-11480ce27852
+# ╠═d384e3fc-b207-48ce-bc7b-1b47a14b1581
+# ╠═d7dc79e6-1f58-4414-aeef-667bdb0dd200
+# ╠═a661e172-6afb-42ff-bd43-bb5b787ee5ed
+# ╟─a6e8c835-f209-445a-9f43-cdf2ecfd1b57
+# ╟─5759b2cc-1e96-4069-ae42-bc159c7cf5fb
+# ╟─ba4a5762-33da-40e6-94fa-cca9befc6d5a
+# ╠═9101631b-81ca-4c7c-94da-81d9e106df78
+# ╠═3f0e5a49-5eec-42cd-bd2c-254b277840bf
+# ╟─716d9ddc-18dc-4973-924e-e5ebf9161ff6
+# ╟─1aa319c8-5e1d-4dd9-ae22-ad99e46e7b4d
+# ╟─605d2481-23be-4ad9-82c9-e375b7be8669
+# ╠═68ba60db-44ad-43e4-b33e-d27696babc99
+# ╠═807bcd72-26c3-44d3-a295-56874cb51a89
+# ╟─de94f2b5-96ae-4936-870f-7639a39fd40d
+# ╠═60a398c9-9fe8-4b90-b863-1568183641d9
+# ╟─21d4560e-721f-4ed4-9db7-86a8151ab22c
+# ╟─99afc7f4-727c-4277-8311-f2ffa94830ae
+# ╠═4956526a-daf9-43c9-bff3-ff2446016e2e
+# ╠═84ff6a23-c134-4910-b630-a7ad45f3bf29
+# ╠═318363d0-6d9e-4144-b478-b775f437edaf
+# ╠═67fd07b7-340b-4e24-bc06-e4c85b186872
+# ╟─c6d5597c-d505-4125-88c4-10415934d2a4
+# ╠═872b4877-30dd-4a92-a3c8-69eb50675dcb
+# ╠═c877c109-db16-468c-8f3c-8294db859d6d
+# ╠═ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
+# ╟─8480d0d7-bdf7-468d-9344-5b789e33921c
+# ╠═6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
+# ╠═b4b317d7-bed1-489c-9650-8d336e330689
+# ╠═93ed973f-daf6-408b-9d4b-d53495418610
+# ╠═dea898a0-1904-4d09-ad0b-6915008fe946
+# ╟─b5763c10-e11c-4389-b6fc-421d2c9682f1
+# ╠═74c19786-1ba7-4865-a993-590a779ae564
+# ╟─e968fc57-d850-4e2d-9410-8777d03b7b3c
+# ╟─3d5abd58-02ab-4b91-a7a3-d9068d4df017
+# ╟─326f7661-3482-4bf2-a97b-57cc7ac60ee2
+# ╟─b273d3d3-648f-4d34-94e7-e49277d4ba29
+# ╠═a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
+# ╟─34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
+# ╟─f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
+# ╟─20166ec9-7084-4d58-8b19-3aa51cc8f2c6
+# ╠═0f31dd2e-0331-4d4c-8db5-9ce188cd3730
+# ╠═cecba3e6-98e8-408a-97dd-96b67c4f42cf
 # ╠═1633fe05-cb51-4032-b6b6-f23db72bbd49
 # ╠═7c312943-c48b-40e7-a499-227f7ff8aa59
 # ╠═a0207e25-0398-4104-8c0f-a8fbd9fe1d53
@@ -1671,55 +2045,10 @@ end
 # ╟─5950488e-2008-48d8-9095-7f9421df191e
 # ╟─77cc33a3-c2bc-4f2d-ba88-e3693ec79b0c
 # ╟─5a3a0f63-dcce-49c9-84fd-a6317184820f
-# ╠═0f31dd2e-0331-4d4c-8db5-9ce188cd3730
-# ╠═828e089e-64be-47c5-8e3c-7107adf02367
-# ╠═bed3d31a-356a-4f9e-9a58-38b511f2b0e7
-# ╠═b4e5b2a0-1ccb-4e10-bd5d-a26916568d69
-# ╠═0a7a0d9e-034f-4f36-a57c-34b5d4ca896d
-# ╠═17f0b235-bf0f-4ace-aaf1-ef3e5d325aad
-# ╠═5e66e59b-fdb8-4373-b231-097b0227dc5c
-# ╠═ba28d507-816f-45c0-b6c0-2f5f4f09855f
-# ╠═ceb2c456-de9b-40a7-ac9f-3ba8d8708c2f
-# ╠═af787ecf-b54e-4519-801d-eee323a1a2a3
-# ╠═bd1d1541-134d-4c88-bb41-920ac36bfe92
-# ╠═a661e172-6afb-42ff-bd43-bb5b787ee5ed
-# ╠═930f8244-cf25-4c1a-95f6-5c8963559c62
-# ╠═68ba60db-44ad-43e4-b33e-d27696babc99
-# ╠═807bcd72-26c3-44d3-a295-56874cb51a89
-# ╠═8ef356ea-7d54-43e6-a936-7c8be04c595f
-# ╠═88f6a040-07cf-47e0-a8be-2478ea350aa7
-# ╠═d36a8a72-eced-4e63-9130-7fcb6c86df76
-# ╠═e9659020-d433-4357-9099-71a65b66a091
-# ╠═c3fc3292-b7eb-4b01-8fba-159c86228de9
-# ╠═89578bff-16b9-4eb2-b8ee-b2839ff2d74c
-# ╟─21d4560e-721f-4ed4-9db7-86a8151ab22c
-# ╟─99afc7f4-727c-4277-8311-f2ffa94830ae
-# ╠═4956526a-daf9-43c9-bff3-ff2446016e2e
-# ╠═84ff6a23-c134-4910-b630-a7ad45f3bf29
-# ╠═318363d0-6d9e-4144-b478-b775f437edaf
-# ╠═67fd07b7-340b-4e24-bc06-e4c85b186872
-# ╠═4edf747b-3838-4315-a397-e452ac9b5465
-# ╟─c6d5597c-d505-4125-88c4-10415934d2a4
-# ╠═872b4877-30dd-4a92-a3c8-69eb50675dcb
-# ╠═c877c109-db16-468c-8f3c-8294db859d6d
-# ╠═ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
-# ╠═8480d0d7-bdf7-468d-9344-5b789e33921c
-# ╠═6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
-# ╠═b4b317d7-bed1-489c-9650-8d336e330689
-# ╠═93ed973f-daf6-408b-9d4b-d53495418610
-# ╠═dea898a0-1904-4d09-ad0b-6915008fe946
-# ╟─b5763c10-e11c-4389-b6fc-421d2c9682f1
-# ╠═74c19786-1ba7-4865-a993-590a779ae564
-# ╠═e968fc57-d850-4e2d-9410-8777d03b7b3c
-# ╟─3d5abd58-02ab-4b91-a7a3-d9068d4df017
-# ╠═326f7661-3482-4bf2-a97b-57cc7ac60ee2
-# ╟─b273d3d3-648f-4d34-94e7-e49277d4ba29
-# ╠═a2cbb0c3-23b9-4091-9ca7-5ba96e85e3a3
-# ╟─34f613a3-85fb-45a8-be3b-cd8e6b3cb5a2
-# ╟─f9ed2487-a7f6-4ce9-b673-f8a298cd5fc3
-# ╠═35f63c4e-3583-4ea8-a057-31f18f8a09d6
+# ╟─35f63c4e-3583-4ea8-a057-31f18f8a09d6
+# ╟─ef59d0f0-0f02-4089-a49d-53fb0427c3a0
 # ╟─35b2770e-1db6-4327-bf86-c27a4b61dbd3
-# ╟─22640a2f-ea38-4517-a4f3-7a65e60ffebe
+# ╠═22640a2f-ea38-4517-a4f3-7a65e60ffebe
 # ╟─d414f840-4952-4de5-a565-7fdc81a94817
 # ╠═326825b0-a17f-427a-9056-8e8156098418
 # ╟─64bf02a4-4fe3-424d-ae6e-5906c3395278
@@ -1728,6 +2057,17 @@ end
 # ╟─9126f47d-cbc7-411f-93bd-8684ba06c9e9
 # ╟─955705f9-c90d-495d-86b4-5f3b5bc9fc8e
 # ╟─187c3005-cd43-45a0-8cbd-bc96b9cb39da
-# ╠═daee414b-3e3c-4e2a-a25a-429a1e7275d5
 # ╟─6c0156a9-7281-4326-9e1f-989efa73bb7b
-# ╠═de62537b-a428-48d3-a866-151127b3255b
+# ╟─8d3df0c0-eb48-4dae-97a8-8c01f0b0a34b
+# ╟─ef6fc423-f1b1-4dcb-a059-276121391bc6
+# ╠═b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+# ╟─dbd41240-9fc4-4e25-8b25-2b68afa679f2
+# ╟─91e3e2b4-7966-42ee-8a45-31d6c5f08121
+# ╟─7cc07d1b-7757-4428-8028-dc892bf05f2f
+# ╟─e0837338-e657-4bdc-ae91-1de9224da78d
+# ╟─64df4678-0721-4911-8289-fb18f55e6657
+# ╟─58845ff9-821b-45d4-b5ec-96e1949bb277
+# ╟─4d5f44e4-85e9-4985-9b76-73be5e097186
+# ╟─dd495e00-d74d-47d4-a5d5-422fb147ec3b
+# ╟─7e6c2162-97e9-4835-b650-52c9723c327f
+# ╠═1ac164c8-88fc-4a87-a194-60ef616fb399

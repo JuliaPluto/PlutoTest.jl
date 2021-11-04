@@ -20,20 +20,30 @@ import HypertextLiteral
 # ╔═╡ 80ffb0fa-1a23-4af6-968d-c02b641f5e6d
 import Test
 
-# ╔═╡ db2e67d8-7172-484e-ac91-85fd611326e6
-md"---"
-
 # ╔═╡ f00356a7-cadd-4363-8769-a2b0e3373ebc
 import PlutoUI: Slider
+
+# ╔═╡ db2e67d8-7172-484e-ac91-85fd611326e6
+md"---"
 
 # ╔═╡ 33eaf9ec-3da2-11ec-3db2-3ff3f1ba309a
 module PlutoTestWrapper include("../src/PlutoTest.jl") end
 
 # ╔═╡ db6dce9e-3cc0-4fce-8cb9-d0fb2d07cb62
-import .PlutoTestWrapper.PlutoTest: @test
+import .PlutoTestWrapper.PlutoTest: PlutoTest, @test
 
 # ╔═╡ f9bdd61c-475c-4f17-8ccb-e7f85e7471a2
 md"---"
+
+# ╔═╡ 6220f755-4082-4362-b3fa-1107beee2739
+module ModuleName
+	function FunctionName()
+		true
+	end
+end
+
+# ╔═╡ 8f64cdc1-77c2-401b-8d05-7b7cbc388f81
+@test ModuleName.FunctionName()
 
 # ╔═╡ 72244046-9b53-4953-8cc7-906279c7b4c8
 x = [1,3]
@@ -44,11 +54,50 @@ x = [1,3]
 # ╔═╡ 90b0b055-2dd1-4b28-a869-ec3a9b853b83
 @test missing == 2
 
+# ╔═╡ 7660f123-1064-4869-9cfd-997ec4a12974
+@test call(10, 20)
+
 # ╔═╡ 0114b7be-36ac-4bbe-b52c-9d54742c7c91
 @test 2+2 == 2+2
 
 # ╔═╡ 5743b872-da02-4922-ae01-2e328a8cd3aa
 @test rand(50) == [rand(50),2]
+
+# ╔═╡ 20639058-4c4c-4380-a22c-dc15c4259542
+macro test_that_throws(expr)
+	# esc(..) used like this (around the whole expression)
+	# is not something you'll usually see... but it's something @test needs now
+	esc(quote
+		result = @test $(expr)
+		if result isa PlutoTest.Fail
+			throw(result)
+		end
+		result
+	end)
+end
+
+# ╔═╡ 182669e9-7dd0-44f7-957a-e7f461be2d8c
+function increment(counter)
+	counter[] = counter[] + 1
+	nothing
+end
+
+# ╔═╡ 48bed8b7-374b-445e-a13b-ef291a7d0887
+result = begin
+	counter = Ref(0)
+	@test begin
+		@test_that_throws counter[] ^ 2 == 0
+		increment(counter)
+		@test_that_throws counter[] ^ 2 == 3
+		increment(counter)
+		@test_that_throws counter[] ^ 2 == 9
+	end
+end
+
+# ╔═╡ d25f42f1-08eb-4852-8162-fe4f28497f4a
+let x = 1
+	@test :($(x) + 1) == :(1 + 1)
+end
 
 # ╔═╡ 9209719e-532f-4206-b2f8-eacd58a84d21
 @bind howmuch Slider(0:100)
@@ -284,17 +333,24 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╔═╡ Cell order:
 # ╠═fbd777b9-1cb3-4d78-93c5-eae75c01b5dd
 # ╠═80ffb0fa-1a23-4af6-968d-c02b641f5e6d
-# ╟─db2e67d8-7172-484e-ac91-85fd611326e6
 # ╠═f00356a7-cadd-4363-8769-a2b0e3373ebc
+# ╟─db2e67d8-7172-484e-ac91-85fd611326e6
 # ╠═33eaf9ec-3da2-11ec-3db2-3ff3f1ba309a
 # ╠═db6dce9e-3cc0-4fce-8cb9-d0fb2d07cb62
 # ╟─f9bdd61c-475c-4f17-8ccb-e7f85e7471a2
+# ╠═6220f755-4082-4362-b3fa-1107beee2739
+# ╠═8f64cdc1-77c2-401b-8d05-7b7cbc388f81
 # ╠═72244046-9b53-4953-8cc7-906279c7b4c8
 # ╠═d162b047-4c3a-4d91-9b97-210e51842996
 # ╠═90b0b055-2dd1-4b28-a869-ec3a9b853b83
+# ╠═7660f123-1064-4869-9cfd-997ec4a12974
 # ╠═0114b7be-36ac-4bbe-b52c-9d54742c7c91
 # ╠═5743b872-da02-4922-ae01-2e328a8cd3aa
 # ╠═a82718bb-effa-4c93-9ef2-3985417e8820
+# ╠═20639058-4c4c-4380-a22c-dc15c4259542
+# ╠═182669e9-7dd0-44f7-957a-e7f461be2d8c
+# ╠═48bed8b7-374b-445e-a13b-ef291a7d0887
+# ╠═d25f42f1-08eb-4852-8162-fe4f28497f4a
 # ╠═9209719e-532f-4206-b2f8-eacd58a84d21
 # ╠═f7631f63-5942-4462-bac7-836119058a23
 # ╠═6f619fbf-80a6-42b0-ab4f-9da28bc77970

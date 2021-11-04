@@ -541,6 +541,19 @@ function is_inside_pluto(m::Module)::Bool
 	end
 end
 
+# ╔═╡ cf314b21-3f4f-4637-b1ce-ec1d5d5af966
+begin
+	if is_inside_pluto(@__MODULE__)
+		import Pkg
+		Pkg.activate("..")
+		Pkg.instantiate()
+	end
+	import HypertextLiteral: @htl		
+end
+
+# ╔═╡ 872b4877-30dd-4a92-a3c8-69eb50675dcb
+preish(x) = @htl("<pre-ish>$(x)</pre-ish>")
+
 # ╔═╡ 2f6e353d-2cdc-46d6-9727-01b0a6167ca0
 ERROR_ON_UNKNOWN_EXPRESSION_TYPE = is_inside_pluto(@__MODULE__)
 
@@ -554,19 +567,6 @@ macro skip_as_script(ex) is_inside_pluto(__module__) ? esc(ex) : nothing end
 
 # ╔═╡ fd8428a3-9fa3-471a-8b2d-5bbb8fdb3137
 @skip_as_script is_good_boy(x) = true;
-
-# ╔═╡ cf314b21-3f4f-4637-b1ce-ec1d5d5af966
-begin
-	if is_inside_pluto(@__MODULE__)
-		import Pkg
-		Pkg.activate("..")
-		Pkg.instantiate()
-	end
-	import HypertextLiteral: @htl		
-end
-
-# ╔═╡ 872b4877-30dd-4a92-a3c8-69eb50675dcb
-preish(x) = @htl("<pre-ish>$(x)</pre-ish>")
 
 # ╔═╡ d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 ex1 = @skip_as_script :(first([56,sqrt(9)]))
@@ -1515,7 +1515,11 @@ begin
 
 		infix = if Meta.isexpr(call.expr, :call)
 			fname = call.expr.args[1]
-			Meta.isbinaryoperator(fname)
+			if fname isa Symbol
+				Meta.isbinaryoperator(fname)
+			else
+				false
+			end
 		else
 			false
 		end
@@ -1673,6 +1677,11 @@ end
 # ╔═╡ 89f78031-1c54-468b-9ab8-7410c51df10e
 export @test
 
+# ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e
+example_longer_fn_name =  @skip_as_script begin
+	@test Test.Pass(:symbol, 10, 10, 10) isa Test.Pass
+end
+
 # ╔═╡ 24f2eb92-5fd7-429b-b2ea-a987195c6edb
 example_cant_stepify_assignments = @skip_as_script let
 	@test @return_error(begin
@@ -1738,7 +1747,7 @@ end
 # ╟─e1c306e3-0a47-4149-a9fb-ec7ab380fa11
 # ╠═b6e8a170-12cc-4d97-905d-274e2609bfd8
 # ╠═a4a067b5-8b4b-4846-b986-0417d83cba48
-# ╟─9c3f6eab-b1c3-4607-add8-d6d7e468c11a
+# ╠═9c3f6eab-b1c3-4607-add8-d6d7e468c11a
 # ╟─dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 # ╠═d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 # ╠═a6709e08-964d-46ea-9813-2c70a834824b
@@ -1795,6 +1804,7 @@ end
 # ╟─fc26d26a-a9a5-4646-b85b-12eac66d96cb
 # ╟─94ebb761-21fb-4015-acb3-26310b19b0dc
 # ╟─312ef6a6-55aa-4913-9416-15e79b4e3362
+# ╠═97eb4444-a22c-47f2-9247-3bce6d7e179e
 # ╟─716d9ddc-18dc-4973-924e-e5ebf9161ff6
 # ╟─1aa319c8-5e1d-4dd9-ae22-ad99e46e7b4d
 # ╟─605d2481-23be-4ad9-82c9-e375b7be8669

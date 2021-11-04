@@ -508,6 +508,7 @@ function build_step_by_step_blocks(
 					:(:(throw($(Computed(error)))))
 				))
 				push!($steps_lens, $expr_ref_lens[])
+				push!($steps_lens, :(throw($(Computed(error)))))
 
 				throw(PartialEvaluatedException(
 					expr_with_lens=$(frame),
@@ -932,7 +933,7 @@ function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
 		print(IOContext(iobuffer, io), e |> remove_linenums)
 	end
 	
-	lines = split(s, "\n")
+	lines = split(replace(s, r"#= line 0 =# ?" => ""), "\n")
 	
 	r = r"\_\_slot[a-z]{16}\_\_"
 	embed_display
@@ -1016,7 +1017,7 @@ function code_loweredish_with_lenses(e::Expr)::Frames
 	elseif e.head == :(=)
 		# This was getting closer, but the whole thing still is quite hard...
 		# so for now any assignment just throws :D
-		# We need quite some 
+		# We need quite some smartness in build_step_by_step_blocks.
 		throw(CantStepifyThisYetException(e))
 		
 		frames = code_loweredish_with_lenses(e.args[2])
@@ -1122,14 +1123,18 @@ function step_by_step(expr)
 	
 	quote
 		begin
-			expr = $(QuoteNode(expr))
-			$steps_lens = Any[expr]
-			$expr_ref_lens = Ref{Any}(expr)
-			$(build_step_by_step_blocks(lowered;
-				expr_ref_lens=expr_ref_lens,
-				steps_lens=steps_lens,
-			)...)
-			$steps_lens
+			try
+				expr = $(QuoteNode(expr))
+				$steps_lens = Any[expr]
+				$expr_ref_lens = Ref{Any}(expr)
+				$(build_step_by_step_blocks(lowered;
+					expr_ref_lens=expr_ref_lens,
+					steps_lens=steps_lens,
+				)...)
+				$steps_lens
+			catch error
+				error.steps
+			end
 		end
 	end
 end
@@ -1402,28 +1407,31 @@ p-frame-controls {
 """)
 
 # ╔═╡ e968fc57-d850-4e2d-9410-8777d03b7b3c
-function frames(fs::Vector)
+function frames(fs::Vector, startframe = nothing)
 	l = length(fs)
 	
-	startframe = l > 2 ? l - 1 : l
+	startframe = if isnothing(startframe)
+		l > 2 ? l - 1 : l
+	else
+		startframe
+	end
 	
-	@htl("""
-		<p-frame-viewer>
+	@htl("""<p-frame-viewer>
 		<p-frames>
 		$(fs)
 		</p-frames>
 		
 		<p-frame-controls>
-		<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
-		<input class="timescrub" style="filter: hue-rotate(149deg) grayscale(.9);" type=range min=1 max=$(l) value=$(startframe)>
+			<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
+			<input class="timescrub" style="filter: hue-rotate(149deg) grayscale(.9);" type=range min=1 max=$(l) value=$(startframe)>
 		</p-frame-controls>
 		
 		
 		<script>
 		const div = currentScript.parentElement
 		
-		const input = div.querySelector("p-frame-controls > input.timescrub")
-		const frames = div.querySelector("p-frames")
+		const input = div.querySelector(":scope > p-frame-controls > input.timescrub")
+		const frames = div.querySelector(":scope > p-frames")
 		
 		const setviz = () => {
 			Array.from(frames.children).forEach((f,i) => {
@@ -1434,20 +1442,12 @@ function frames(fs::Vector)
 		setviz()
 		
 		input.addEventListener("input", setviz)
-
 		</script>
-
-
-
-		</p-frame-viewer>
-		
+	
 		<style>
 		$(frames_css)
 		</style>
-		""")
-	
-	
-	
+	</p-frame-viewer>""")
 end
 
 # ╔═╡ 74c19786-1ba7-4865-a993-590a779ae564
@@ -1747,7 +1747,7 @@ end
 # ╟─e1c306e3-0a47-4149-a9fb-ec7ab380fa11
 # ╠═b6e8a170-12cc-4d97-905d-274e2609bfd8
 # ╠═a4a067b5-8b4b-4846-b986-0417d83cba48
-# ╠═9c3f6eab-b1c3-4607-add8-d6d7e468c11a
+# ╟─9c3f6eab-b1c3-4607-add8-d6d7e468c11a
 # ╟─dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 # ╠═d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 # ╠═a6709e08-964d-46ea-9813-2c70a834824b
@@ -1776,14 +1776,14 @@ end
 # ╠═c47252b9-8869-4878-b9bf-7eeb7ed17c9a
 # ╟─227129bc-4415-4240-ad55-815bde65a5a1
 # ╠═ce90612e-ffc1-4e30-9d89-531f11fd75eb
-# ╠═0a3f5c6c-6e1b-458c-bf91-523a0b639b41
+# ╟─0a3f5c6c-6e1b-458c-bf91-523a0b639b41
 # ╟─43fe89d7-f33e-4dfa-853e-327e981feb1e
 # ╟─fc000550-3053-483e-bc41-6aed22c3999c
 # ╟─3f11ca4c-dd06-47c9-92e2-cb97c18a06db
 # ╟─b155d336-f746-4c82-8206-ab1a49cedea8
 # ╟─221aa13b-aa25-4145-8076-da77432364bb
 # ╟─2a514f2f-79c8-4b0d-be8a-170f3386d5d5
-# ╠═9fb4d52d-77f2-4032-a769-6d5e60be43bf
+# ╟─9fb4d52d-77f2-4032-a769-6d5e60be43bf
 # ╟─1c1b64b1-107e-4d43-9ce2-569c3034017e
 # ╟─cade56ad-312e-40cf-bcda-11480ce27852
 # ╟─810470b8-0a6c-48b8-aba2-a2058b8d9f59
@@ -1828,12 +1828,12 @@ end
 # ╟─ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
 # ╟─8480d0d7-bdf7-468d-9344-5b789e33921c
 # ╠═6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
-# ╠═b4b317d7-bed1-489c-9650-8d336e330689
+# ╟─b4b317d7-bed1-489c-9650-8d336e330689
 # ╠═93ed973f-daf6-408b-9d4b-d53495418610
 # ╠═dea898a0-1904-4d09-ad0b-6915008fe946
 # ╟─b5763c10-e11c-4389-b6fc-421d2c9682f1
-# ╠═74c19786-1ba7-4865-a993-590a779ae564
-# ╟─e968fc57-d850-4e2d-9410-8777d03b7b3c
+# ╟─74c19786-1ba7-4865-a993-590a779ae564
+# ╠═e968fc57-d850-4e2d-9410-8777d03b7b3c
 # ╟─3d5abd58-02ab-4b91-a7a3-d9068d4df017
 # ╟─326f7661-3482-4bf2-a97b-57cc7ac60ee2
 # ╟─b273d3d3-648f-4d34-94e7-e49277d4ba29

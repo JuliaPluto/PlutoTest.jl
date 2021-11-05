@@ -90,159 +90,6 @@ md"""
 # Test macro
 """
 
-# ╔═╡ 9c3f6eab-b1c3-4607-add8-d6d7e468c11a
-begin
-	show_for_test_result_should_be_defined_before_test_macro = true
-	
-	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
-		infix = if Meta.isexpr(call.expr, :call)
-			fname = call.expr.args[1]
-			if fname isa Symbol
-				Meta.isbinaryoperator(fname)
-			else
-				false
-			end
-		else
-			false
-		end
-		
-		classes = [
-			"pluto-test", 
-			"call",
-			(isa(call,CorrectCall) ? "correct" : "wrong"),
-			(isa(call,Pass) ? "pass" : "fail"),
-			infix ? "infix-operator" : "prefix-operator",
-		]
-
-		slotted_display_raw = SlottedDisplay.(call.steps)
-
-		elements_to_slot = []
-		frames_list = []
-		for (i, step) in enumerate(call.steps)
-			raw_display = SlottedDisplay(step)
-
-			new_d_😏 = Dict{Symbol, Any}()
-			for (key, computed) in raw_display.d
-				slot_key = "slot-$i-$key"
-				
-				new_d_😏[key] = Computed(@htl "<slot name=$key></slot>")
-				
-				push!(elements_to_slot, @htl """
-					<span slot=$key>$(embed_display(computed.x))</span>
-				""")
-			end
-
-			push!(frames_list, SlottedDisplay(new_d_😏, raw_display.e))
-		end
-		
-		result = @htl("""<div>
-			<template shadowroot=open>
-				<div class=$(classes) part="container">		
-					<pt-dot part="dot"></pt-dot>
-					<pt-dot part="dot" class="floating top"></pt-dot>
-					<pt-dot part="dot" class="floating bottom"></pt-dot>
-	
-					$(frames(
-						frames_list,
-						part="frame-viewer",
-						exportparts="
-					))
-				</div>
-			
-				<style>
-				$(pluto_test_css.code)
-				</style>
-		
-				<script>
-				const div = currentScript.parentNode.querySelector(":scope > div")
-			
-				div.addEventListener("click", (e) => {
-					if(!div.classList.contains("expanded") || e.target.closest("pt-dot:not(.floating)") != null){
-						div.classList.toggle("expanded")
-						e.stopPropagation()
-					}
-				})
-				
-				const throttled = (f, delay) => {
-					const waiting = { current: false }
-					return () => {
-						if (!waiting.current) {
-							f()
-							waiting.current = true
-							setTimeout(() => {
-								f()
-								waiting.current = false
-							}, delay)
-						}
-					}
-				}
-				
-				const dot = div.querySelector("pt-dot")
-				const dot_top = div.querySelector("pt-dot.top")
-				const dot_bot = div.querySelector("pt-dot.bottom")
-				
-				const is_chrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
-				const is_firefox = /Firefox/.test(navigator.userAgent) && /Mozilla/.test(navigator.userAgent)
-				
-				// safari is too slow
-				
-				if(is_chrome || is_firefox){
-	
-				const intersect = (r) => {
-					const topdistance = r.top
-					const botdistance = window.innerHeight - r.bottom
-				
-					
-					const t = (x) => `translate(\${2*Math.sqrt(Math.max(0,-50-x))}px,0)`
-					dot_top.style.transform = t(topdistance)
-					dot_bot.style.transform = t(botdistance)
-	
-					div.classList.toggle("show-top-float", topdistance < 4)
-					div.classList.toggle("show-bottom-float", botdistance < 4)
-				}
-				
-				intersect(dot.getBoundingClientRect())
-				
-				const scroll_listener = throttled(() => {
-					intersect(dot.getBoundingClientRect())
-				}, 200)
-				
-				window.addEventListener("scroll", scroll_listener)
-	
-				let observer = new IntersectionObserver((es) => {
-					const e = es[0]
-					intersect(e.boundingClientRect)
-				},  {
-				  rootMargin: '-4px',
-				  threshold: 1.0
-				});
-	
-				observer.observe(dot)
-				invalidation.then(() => {
-					window.removeEventListener("scroll", scroll_listener)
-					observer.unobserve(dot)
-				})
-				
-				for (let e of div.querySelectorAll("pt-dot.floating")) {
-					e.addEventListener("click", () => dot.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"}))
-				}
-				
-				}
-				</script>
-			</template>
-
-			$(elements_to_slot)
-		</div>""")
-		Base.show(io, m, result)
-	end
-
-	md"""
-	```julia
-	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
-	```
-	"""
-end
-
 # ╔═╡ dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 md"""
 # $(html"<img src='https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg' style='height: .75em; margin-bottom: -.1em'>") _Time travel_ evaluation
@@ -1291,85 +1138,6 @@ function test(expr, extra_args...)
 	end
 end
 
-# ╔═╡ a4a067b5-8b4b-4846-b986-0417d83cba48
-macro test(main_expr, expr...)
-	show_for_test_result_should_be_defined_before_test_macro
-	
-	source = QuoteNode(__source__)
-	orig_expr = QuoteNode(main_expr)
-	
-	quote
-		pluto_result, julia_test_result = try
-			result = $(test(main_expr, expr...))
-			(result, Test.Returned(result isa CorrectCall, "", $(source)))
-		catch err	
-			rethrow(err)
-			(err, Test.Threw(err, Base.catch_stack(), $(source)))
-		end
-
-		try
-			Test.do_test(julia_test_result, $(orig_expr))
-		catch; end
-		
-		pluto_result
-	end
-end
-
-# ╔═╡ 73d74146-8f60-4388-aaba-0dfe4215cb5d
-@skip_as_script @test sqrt(20-11) == 3
-
-# ╔═╡ 71b22e76-2b50-4d16-85f6-9dad0415630e
-@skip_as_script @test iseven(123 + 7^3)
-
-# ╔═╡ 6762ed72-f422-43a9-a782-de78f739c0ae
-@skip_as_script @test 4+4 ∈ [1:7...]
-
-# ╔═╡ f77275b9-90aa-4e07-a608-981b5df727af
-@skip_as_script @test is_good_boy(first(friends))
-
-# ╔═╡ 37529063-8ee9-46a6-85cc-94db292da541
-@skip_as_script @test sqrt(sqrt(16)) == sqrt(2)
-
-# ╔═╡ 89f78031-1c54-468b-9ab8-7410c51df10e
-export @test
-
-# ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e
-example_longer_fn_name =  @skip_as_script begin
-	@test Test.Pass(:symbol, 10, 10, 10) isa Test.Pass
-end
-
-# ╔═╡ 24f2eb92-5fd7-429b-b2ea-a987195c6edb
-example_cant_stepify_assignments = @skip_as_script let
-	@test @return_error(begin
-		@expand_at_runtime @test begin
-			x = 1 + 3
-			x
-		end
-	end).error isa CantStepifyThisYetException
-end
-
-# ╔═╡ bedc3586-6b85-4de2-9ea1-79d842db6b56
-example_cant_stepify_try_catch = @skip_as_script let
-	@test @return_error(begin
-		@expand_at_runtime @test try
-			0 / 0
-		catch error
-			"Oops"
-		end
-	end).error isa CantStepifyThisYetException
-end
-
-# ╔═╡ 42f34453-9935-4e50-a62b-9dcf31d72601
-example_cant_stepify_if_else = @skip_as_script let
-	@test @return_error(begin
-		@expand_at_runtime @test if 4 > 5
-			"Yeahhh"
-		else
-			"Nohhhh"
-		end
-	end).error isa CantStepifyThisYetException
-end
-
 # ╔═╡ d7dc79e6-1f58-4414-aeef-667bdb0dd200
 macro pretty_step_by_step(e)
 	quote
@@ -1766,6 +1534,237 @@ end
 function Base.show(io::IO, mime::MIME"text/html", stylesheet::PlutoStylesheet)
 	# show(io, mime, md"`<style>...`")
 	print(io, "Stylesheet")
+end
+
+# ╔═╡ 9c3f6eab-b1c3-4607-add8-d6d7e468c11a
+begin
+	show_for_test_result_should_be_defined_before_test_macro = true
+	
+	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
+		infix = if Meta.isexpr(call.expr, :call)
+			fname = call.expr.args[1]
+			if fname isa Symbol
+				Meta.isbinaryoperator(fname)
+			else
+				false
+			end
+		else
+			false
+		end
+		
+		classes = [
+			"pluto-test", 
+			"call",
+			(isa(call,CorrectCall) ? "correct" : "wrong"),
+			(isa(call,Pass) ? "pass" : "fail"),
+			infix ? "infix-operator" : "prefix-operator",
+		]
+
+		slotted_display_raw = SlottedDisplay.(call.steps)
+
+		elements_to_slot = []
+		frames_list = []
+		for (i, step) in enumerate(call.steps)
+			raw_display = SlottedDisplay(step)
+
+			new_d_😏 = Dict{Symbol, Any}()
+			for (key, computed) in raw_display.d
+				slot_key = "slot-$i-$key"
+				
+				new_d_😏[key] = Computed(@htl "<slot name=$key></slot>")
+				
+				push!(elements_to_slot, @htl """
+					<span slot=$key>$(embed_display(computed.x))</span>
+				""")
+			end
+
+			push!(frames_list, SlottedDisplay(new_d_😏, raw_display.e))
+		end
+		
+		result = @htl("""<div>
+			<template shadowroot=open>
+				<div class=$(classes) part="container">		
+					<pt-dot part="dot"></pt-dot>
+					<pt-dot part="dot" class="floating top"></pt-dot>
+					<pt-dot part="dot" class="floating bottom"></pt-dot>
+	
+					$(frames(
+						frames_list,
+						part="frame-viewer"
+					))
+				</div>
+			
+				<style>
+				$(pluto_test_css.code)
+				</style>
+		
+				<script>
+				const div = currentScript.parentNode.querySelector(":scope > div")
+			
+				div.addEventListener("click", (e) => {
+					if(!div.classList.contains("expanded") || e.target.closest("pt-dot:not(.floating)") != null){
+						div.classList.toggle("expanded")
+						e.stopPropagation()
+					}
+				})
+				
+				const throttled = (f, delay) => {
+					const waiting = { current: false }
+					return () => {
+						if (!waiting.current) {
+							f()
+							waiting.current = true
+							setTimeout(() => {
+								f()
+								waiting.current = false
+							}, delay)
+						}
+					}
+				}
+				
+				const dot = div.querySelector("pt-dot")
+				const dot_top = div.querySelector("pt-dot.top")
+				const dot_bot = div.querySelector("pt-dot.bottom")
+				
+				const is_chrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
+				const is_firefox = /Firefox/.test(navigator.userAgent) && /Mozilla/.test(navigator.userAgent)
+				
+				// safari is too slow
+				
+				if(is_chrome || is_firefox){
+	
+				const intersect = (r) => {
+					const topdistance = r.top
+					const botdistance = window.innerHeight - r.bottom
+				
+					
+					const t = (x) => `translate(\${2*Math.sqrt(Math.max(0,-50-x))}px,0)`
+					dot_top.style.transform = t(topdistance)
+					dot_bot.style.transform = t(botdistance)
+	
+					div.classList.toggle("show-top-float", topdistance < 4)
+					div.classList.toggle("show-bottom-float", botdistance < 4)
+				}
+				
+				intersect(dot.getBoundingClientRect())
+				
+				const scroll_listener = throttled(() => {
+					intersect(dot.getBoundingClientRect())
+				}, 200)
+				
+				window.addEventListener("scroll", scroll_listener)
+	
+				let observer = new IntersectionObserver((es) => {
+					const e = es[0]
+					intersect(e.boundingClientRect)
+				},  {
+				  rootMargin: '-4px',
+				  threshold: 1.0
+				});
+	
+				observer.observe(dot)
+				invalidation.then(() => {
+					window.removeEventListener("scroll", scroll_listener)
+					observer.unobserve(dot)
+				})
+				
+				for (let e of div.querySelectorAll("pt-dot.floating")) {
+					e.addEventListener("click", () => dot.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"}))
+				}
+				
+				}
+				</script>
+			</template>
+
+			$(elements_to_slot)
+		</div>""")
+		Base.show(io, m, result)
+	end
+
+	md"""
+	```julia
+	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
+	```
+	"""
+end
+
+# ╔═╡ a4a067b5-8b4b-4846-b986-0417d83cba48
+macro test(main_expr, expr...)
+	show_for_test_result_should_be_defined_before_test_macro
+	
+	source = QuoteNode(__source__)
+	orig_expr = QuoteNode(main_expr)
+	
+	quote
+		pluto_result, julia_test_result = try
+			result = $(test(main_expr, expr...))
+			(result, Test.Returned(result isa CorrectCall, "", $(source)))
+		catch err	
+			rethrow(err)
+			(err, Test.Threw(err, Base.catch_stack(), $(source)))
+		end
+
+		try
+			Test.do_test(julia_test_result, $(orig_expr))
+		catch; end
+		
+		pluto_result
+	end
+end
+
+# ╔═╡ 73d74146-8f60-4388-aaba-0dfe4215cb5d
+@skip_as_script @test sqrt(20-11) == 3
+
+# ╔═╡ 71b22e76-2b50-4d16-85f6-9dad0415630e
+@skip_as_script @test iseven(123 + 7^3)
+
+# ╔═╡ 6762ed72-f422-43a9-a782-de78f739c0ae
+@skip_as_script @test 4+4 ∈ [1:7...]
+
+# ╔═╡ f77275b9-90aa-4e07-a608-981b5df727af
+@skip_as_script @test is_good_boy(first(friends))
+
+# ╔═╡ 37529063-8ee9-46a6-85cc-94db292da541
+@skip_as_script @test sqrt(sqrt(16)) == sqrt(2)
+
+# ╔═╡ 89f78031-1c54-468b-9ab8-7410c51df10e
+export @test
+
+# ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e
+example_longer_fn_name =  @skip_as_script begin
+	@test Test.Pass(:symbol, 10, 10, 10) isa Test.Pass
+end
+
+# ╔═╡ 24f2eb92-5fd7-429b-b2ea-a987195c6edb
+example_cant_stepify_assignments = @skip_as_script let
+	@test @return_error(begin
+		@expand_at_runtime @test begin
+			x = 1 + 3
+			x
+		end
+	end).error isa CantStepifyThisYetException
+end
+
+# ╔═╡ bedc3586-6b85-4de2-9ea1-79d842db6b56
+example_cant_stepify_try_catch = @skip_as_script let
+	@test @return_error(begin
+		@expand_at_runtime @test try
+			0 / 0
+		catch error
+			"Oops"
+		end
+	end).error isa CantStepifyThisYetException
+end
+
+# ╔═╡ 42f34453-9935-4e50-a62b-9dcf31d72601
+example_cant_stepify_if_else = @skip_as_script let
+	@test @return_error(begin
+		@expand_at_runtime @test if 4 > 5
+			"Yeahhh"
+		else
+			"Nohhhh"
+		end
+	end).error isa CantStepifyThisYetException
 end
 
 # ╔═╡ Cell order:

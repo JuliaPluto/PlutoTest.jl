@@ -90,6 +90,159 @@ md"""
 # Test macro
 """
 
+# ╔═╡ 9c3f6eab-b1c3-4607-add8-d6d7e468c11a
+begin
+	show_for_test_result_should_be_defined_before_test_macro = true
+	
+	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
+		infix = if Meta.isexpr(call.expr, :call)
+			fname = call.expr.args[1]
+			if fname isa Symbol
+				Meta.isbinaryoperator(fname)
+			else
+				false
+			end
+		else
+			false
+		end
+		
+		classes = [
+			"pluto-test", 
+			"call",
+			(isa(call,CorrectCall) ? "correct" : "wrong"),
+			(isa(call,Pass) ? "pass" : "fail"),
+			infix ? "infix-operator" : "prefix-operator",
+		]
+
+		slotted_display_raw = SlottedDisplay.(call.steps)
+
+		elements_to_slot = []
+		frames_list = []
+		for (i, step) in enumerate(call.steps)
+			raw_display = SlottedDisplay(step)
+
+			new_d_😏 = Dict{Symbol, Any}()
+			for (key, computed) in raw_display.d
+				slot_key = "slot-$i-$key"
+				
+				new_d_😏[key] = Computed(@htl "<slot name=$key></slot>")
+				
+				push!(elements_to_slot, @htl """
+					<span slot=$key>$(embed_display(computed.x))</span>
+				""")
+			end
+
+			push!(frames_list, SlottedDisplay(new_d_😏, raw_display.e))
+		end
+		
+		result = @htl("""<div>
+			<template shadowroot=open>
+				<div class=$(classes) part="container">		
+					<pt-dot part="dot"></pt-dot>
+					<pt-dot part="dot" class="floating top"></pt-dot>
+					<pt-dot part="dot" class="floating bottom"></pt-dot>
+	
+					$(frames(
+						frames_list,
+						part="frame-viewer",
+						exportparts="
+					))
+				</div>
+			
+				<style>
+				$(pluto_test_css.code)
+				</style>
+		
+				<script>
+				const div = currentScript.parentNode.querySelector(":scope > div")
+			
+				div.addEventListener("click", (e) => {
+					if(!div.classList.contains("expanded") || e.target.closest("pt-dot:not(.floating)") != null){
+						div.classList.toggle("expanded")
+						e.stopPropagation()
+					}
+				})
+				
+				const throttled = (f, delay) => {
+					const waiting = { current: false }
+					return () => {
+						if (!waiting.current) {
+							f()
+							waiting.current = true
+							setTimeout(() => {
+								f()
+								waiting.current = false
+							}, delay)
+						}
+					}
+				}
+				
+				const dot = div.querySelector("pt-dot")
+				const dot_top = div.querySelector("pt-dot.top")
+				const dot_bot = div.querySelector("pt-dot.bottom")
+				
+				const is_chrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
+				const is_firefox = /Firefox/.test(navigator.userAgent) && /Mozilla/.test(navigator.userAgent)
+				
+				// safari is too slow
+				
+				if(is_chrome || is_firefox){
+	
+				const intersect = (r) => {
+					const topdistance = r.top
+					const botdistance = window.innerHeight - r.bottom
+				
+					
+					const t = (x) => `translate(\${2*Math.sqrt(Math.max(0,-50-x))}px,0)`
+					dot_top.style.transform = t(topdistance)
+					dot_bot.style.transform = t(botdistance)
+	
+					div.classList.toggle("show-top-float", topdistance < 4)
+					div.classList.toggle("show-bottom-float", botdistance < 4)
+				}
+				
+				intersect(dot.getBoundingClientRect())
+				
+				const scroll_listener = throttled(() => {
+					intersect(dot.getBoundingClientRect())
+				}, 200)
+				
+				window.addEventListener("scroll", scroll_listener)
+	
+				let observer = new IntersectionObserver((es) => {
+					const e = es[0]
+					intersect(e.boundingClientRect)
+				},  {
+				  rootMargin: '-4px',
+				  threshold: 1.0
+				});
+	
+				observer.observe(dot)
+				invalidation.then(() => {
+					window.removeEventListener("scroll", scroll_listener)
+					observer.unobserve(dot)
+				})
+				
+				for (let e of div.querySelectorAll("pt-dot.floating")) {
+					e.addEventListener("click", () => dot.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"}))
+				}
+				
+				}
+				</script>
+			</template>
+
+			$(elements_to_slot)
+		</div>""")
+		Base.show(io, m, result)
+	end
+
+	md"""
+	```julia
+	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
+	```
+	"""
+end
+
 # ╔═╡ dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 md"""
 # $(html"<img src='https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg' style='height: .75em; margin-bottom: -.1em'>") _Time travel_ evaluation
@@ -702,6 +855,7 @@ const toc_css = """
 
 # ╔═╡ 122c27a5-a6e8-45ef-a968-b9b4b3f9ad09
 const toc_js = toc -> """
+console.log('document', document)
 const getParentCell = el => el.closest("pluto-cell")
 
 const getHeaders = () => {
@@ -924,39 +1078,6 @@ end
 # ╔═╡ dd495e00-d74d-47d4-a5d5-422fb147ec3b
 remove_linenums(x) = x
 
-# ╔═╡ ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
-function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
-
-	d, e = sd.d, sd.e
-	
-	s = sprint() do iobuffer
-		print(IOContext(iobuffer, io), e |> remove_linenums)
-	end
-	
-	lines = split(replace(s, r"#= line 0 =# ?" => ""), "\n")
-	
-	r = r"\_\_slot[a-z]{16}\_\_"
-	embed_display
-	h = @htl("""<slotted-code>
-		$(
-	map(lines) do l
-		keys = [Symbol(m.match) for m in eachmatch(r, l)]
-		rest = split(l, r; keepempty=true)
-		
-		result = vcat((
-			[(isempty(r) ? @htl("") : preish(r)), embed_display(d[k].x)]
-			for (r,k) in zip(rest, keys)
-			)...)
-		
-		push!(result, preish(last(rest)))
-		
-		@htl("<line-like>$(result)</line-like>")
-	end
-	)
-		</slotted-code>""")
-	show(io, m, h)
-end
-
 # ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
 expr_to_str(e, mod=@__MODULE__()) = let
 	Computed;
@@ -1170,6 +1291,85 @@ function test(expr, extra_args...)
 	end
 end
 
+# ╔═╡ a4a067b5-8b4b-4846-b986-0417d83cba48
+macro test(main_expr, expr...)
+	show_for_test_result_should_be_defined_before_test_macro
+	
+	source = QuoteNode(__source__)
+	orig_expr = QuoteNode(main_expr)
+	
+	quote
+		pluto_result, julia_test_result = try
+			result = $(test(main_expr, expr...))
+			(result, Test.Returned(result isa CorrectCall, "", $(source)))
+		catch err	
+			rethrow(err)
+			(err, Test.Threw(err, Base.catch_stack(), $(source)))
+		end
+
+		try
+			Test.do_test(julia_test_result, $(orig_expr))
+		catch; end
+		
+		pluto_result
+	end
+end
+
+# ╔═╡ 73d74146-8f60-4388-aaba-0dfe4215cb5d
+@skip_as_script @test sqrt(20-11) == 3
+
+# ╔═╡ 71b22e76-2b50-4d16-85f6-9dad0415630e
+@skip_as_script @test iseven(123 + 7^3)
+
+# ╔═╡ 6762ed72-f422-43a9-a782-de78f739c0ae
+@skip_as_script @test 4+4 ∈ [1:7...]
+
+# ╔═╡ f77275b9-90aa-4e07-a608-981b5df727af
+@skip_as_script @test is_good_boy(first(friends))
+
+# ╔═╡ 37529063-8ee9-46a6-85cc-94db292da541
+@skip_as_script @test sqrt(sqrt(16)) == sqrt(2)
+
+# ╔═╡ 89f78031-1c54-468b-9ab8-7410c51df10e
+export @test
+
+# ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e
+example_longer_fn_name =  @skip_as_script begin
+	@test Test.Pass(:symbol, 10, 10, 10) isa Test.Pass
+end
+
+# ╔═╡ 24f2eb92-5fd7-429b-b2ea-a987195c6edb
+example_cant_stepify_assignments = @skip_as_script let
+	@test @return_error(begin
+		@expand_at_runtime @test begin
+			x = 1 + 3
+			x
+		end
+	end).error isa CantStepifyThisYetException
+end
+
+# ╔═╡ bedc3586-6b85-4de2-9ea1-79d842db6b56
+example_cant_stepify_try_catch = @skip_as_script let
+	@test @return_error(begin
+		@expand_at_runtime @test try
+			0 / 0
+		catch error
+			"Oops"
+		end
+	end).error isa CantStepifyThisYetException
+end
+
+# ╔═╡ 42f34453-9935-4e50-a62b-9dcf31d72601
+example_cant_stepify_if_else = @skip_as_script let
+	@test @return_error(begin
+		@expand_at_runtime @test if 4 > 5
+			"Yeahhh"
+		else
+			"Nohhhh"
+		end
+	end).error isa CantStepifyThisYetException
+end
+
 # ╔═╡ d7dc79e6-1f58-4414-aeef-667bdb0dd200
 macro pretty_step_by_step(e)
 	quote
@@ -1242,7 +1442,7 @@ rs = @skip_as_script @eval_step_by_step(begin
 		plot(2000 .+ 30 .* rand(2+2))
 		4+5
 		sqrt(sqrt(sqrt(5)))
-	end) .|> SlottedDisplay
+end) .|> SlottedDisplay
 
 # ╔═╡ 93ed973f-daf6-408b-9d4b-d53495418610
 @skip_as_script @bind rindex Slider(eachindex(rs))
@@ -1258,6 +1458,10 @@ end
 # ╔═╡ 8a2e8348-49cf-4855-b5b3-cdee33e5ed67
 # const pluto_test_css = PlutoStylesheet("""
 pluto_test_css = PlutoStylesheet("""
+* {
+	box-sizing: border-box;
+}
+
 pt-dot {
 	flex: 0 0 auto;
 	background: grey;
@@ -1377,7 +1581,7 @@ border-radius: 7px;
 	cursor: pointer;
 }
 
-.pluto-test:not(.expanded) > p-frame-viewer > p-frame-controls {
+.pluto-test:not(.expanded) > p-frame-viewer::part(frame-controls) {
 	display: none;
 	
 }
@@ -1385,11 +1589,9 @@ border-radius: 7px;
 .pluto-test.expanded > p-frame-viewer {
     max-width: 100%;
 }
-.pluto-test.expanded > p-frame-viewer > p-frames > slotted-code > line-like {
+.pluto-test.expanded > p-frame-viewer::part(line-like) {
 	flex-wrap: wrap;
-}
-.pluto-test.expanded > p-frame-viewer > p-frames > slotted-code > line-like > pluto-display[mime="application/vnd.pluto.tree+object"] {
-	/*flex-basis: 100%;*/
+	background-color: red;
 }
 """)
 
@@ -1404,11 +1606,16 @@ p-frames,
 p-frame-controls {
 	display: inline-flex;
 }
+p-frame-controls {
+	margin-top: 4px;
+	align-items: center;
+}
 """)
 
 # ╔═╡ e968fc57-d850-4e2d-9410-8777d03b7b3c
-function frames(fs::Vector, startframe = nothing)
+function frames(fs::Vector, startframe = nothing; kwargs...)
 	l = length(fs)
+	@info "kwargs" kwargs
 	
 	startframe = if isnothing(startframe)
 		l > 2 ? l - 1 : l
@@ -1416,37 +1623,43 @@ function frames(fs::Vector, startframe = nothing)
 		startframe
 	end
 	
-	@htl("""<p-frame-viewer>
-		<p-frames>
-		$(fs)
-		</p-frames>
-		
-		<p-frame-controls>
-			<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
-			<input class="timescrub" style="filter: hue-rotate(149deg) grayscale(.9);" type=range min=1 max=$(l) value=$(startframe)>
-		</p-frame-controls>
-		
-		
-		<script>
-		const div = currentScript.parentElement
-		
-		const input = div.querySelector(":scope > p-frame-controls > input.timescrub")
-		const frames = div.querySelector(":scope > p-frames")
-		
-		const setviz = () => {
-			Array.from(frames.children).forEach((f,i) => {
-				f.style.display = i + 1 === input.valueAsNumber ? "inherit" : "none"
-			})
-		}
-		
-		setviz()
-		
-		input.addEventListener("input", setviz)
-		</script>
+	@htl("""<p-frame-viewer $(kwargs)>
+		<template shadowroot=open>
+			<p-frame-viewer part="frame-viewer">
+				<p-frames>
+					<slot></slot>
+				</p-frames>
+				
+				<p-frame-controls part="frame-controls">
+					<img src="https://cdn.jsdelivr.net/gh/ionic-team/ionicons@5.5.1/src/svg/time-outline.svg" style="width: 1em; height: 1em; transform: scale(-1,1); opacity: .5; margin-left: 2em;">
+					<input class="timescrub" style="filter: hue-rotate(149deg) grayscale(.9);" type=range min=1 max=$(l) value=$(startframe)>
+				</p-frame-controls>
+				
+				<style>
+				$(frames_css.code)
+				</style>
+			</p-frame-viewer>
 	
-		<style>
-		$(frames_css)
-		</style>
+			<script>
+			const div = currentScript.parentNode
+				.querySelector('p-frame-viewer')
+
+			const input = div.querySelector(":scope > p-frame-controls > input.timescrub")
+			const frames_lot = div.querySelector(":scope > p-frames > slot")
+			
+			const setviz = () => {
+				Array.from(frames_lot.assignedElements()).forEach((f,i) => {
+					f.style.display = i + 1 === input.valueAsNumber ? "inherit" : "none"
+				})
+			}
+			
+			setviz()
+			
+			input.addEventListener("input", setviz)
+			</script>
+		</template>
+
+		$(fs)
 	</p-frame-viewer>""")
 end
 
@@ -1471,6 +1684,55 @@ line-like {
 	align-items: baseline;
 }
 """)
+
+# ╔═╡ ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
+function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
+	d, e = sd.d, sd.e
+	
+	s = sprint() do iobuffer
+		print(IOContext(iobuffer, io), e |> remove_linenums)
+	end
+	
+	lines = split(replace(s, r"#= line 0 =# ?" => ""), "\n")
+	slot_regex = r"\_\_slot[a-z]{16}\_\_"
+
+	slots = []
+	inner_html_elements = map(enumerate(lines)) do (line_index, l)
+		keys = [Symbol(m.match) for m in eachmatch(slot_regex, l)]
+		rest = split(l, slot_regex; keepempty=true)
+
+		inner_html_elements = []
+		for (in_line_index, (r, k)) in enumerate(zip(rest, keys))
+			push!(inner_html_elements, isempty(r) ? nothing : preish(r))
+
+			slot_id = "slot-$(line_index)-$(in_line_index)"
+			push!(inner_html_elements, @htl """
+				<slot name=$(slot_id)></slot>
+			""")
+			push!(slots, @htl """
+				<span slot=$(slot_id)>$(embed_display(d[k].x))</span>
+			""")
+		end
+		push!(inner_html_elements, preish(rest[end]))
+		
+		@htl("<line-like>$(inner_html_elements)</line-like>")
+	end
+	
+	h = @htl("""<slotted-code>
+		<template shadowroot=open>
+			<slotted-code>
+				$(inner_html_elements)
+	
+				<style>
+				$(slotted_code_css.code)
+				</style>
+			</slotted-code>
+		</template>
+
+		$(slots)
+	</slotted-code>""")
+	show(io, m, h)
+end
 
 # ╔═╡ b273d3d3-648f-4d34-94e7-e49277d4ba29
 with_slotted_css(x) = @htl("""
@@ -1506,214 +1768,6 @@ function Base.show(io::IO, mime::MIME"text/html", stylesheet::PlutoStylesheet)
 	print(io, "Stylesheet")
 end
 
-# ╔═╡ 9c3f6eab-b1c3-4607-add8-d6d7e468c11a
-begin
-	show_for_test_result_should_be_defined_before_test_macro = true
-	
-	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
-		
-
-		infix = if Meta.isexpr(call.expr, :call)
-			fname = call.expr.args[1]
-			if fname isa Symbol
-				Meta.isbinaryoperator(fname)
-			else
-				false
-			end
-		else
-			false
-		end
-		
-		classes = [
-			"pluto-test", 
-			"call",
-			(isa(call,CorrectCall) ? "correct" : "wrong"),
-			(isa(call,Pass) ? "pass" : "fail"),
-			infix ? "infix-operator" : "prefix-operator",
-		]
-		
-		result = @htl("""
-		
-		<div class=$(classes)>
-			<script>
-			
-			const div = currentScript.parentElement
-			div.addEventListener("click", (e) => {
-				if(!div.classList.contains("expanded") || e.target.closest("pt-dot:not(.floating)") != null){
-					div.classList.toggle("expanded")
-					e.stopPropagation()
-				}
-			})
-			
-			const throttled = (f, delay) => {
-				const waiting = { current: false }
-				return () => {
-					if (!waiting.current) {
-						f()
-						waiting.current = true
-						setTimeout(() => {
-							f()
-							waiting.current = false
-						}, delay)
-					}
-				}
-			}
-			
-			const dot = div.querySelector("pt-dot")
-			const dot_top = div.querySelector("pt-dot.top")
-			const dot_bot = div.querySelector("pt-dot.bottom")
-			
-			const is_chrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
-			const is_firefox = /Firefox/.test(navigator.userAgent) && /Mozilla/.test(navigator.userAgent)
-			
-			// safari is too slow
-			
-			if(is_chrome || is_firefox){
-
-			const intersect = (r) => {
-				const topdistance = r.top
-				const botdistance = window.innerHeight - r.bottom
-			
-				
-				const t = (x) => `translate(\${2*Math.sqrt(Math.max(0,-50-x))}px,0)`
-				dot_top.style.transform = t(topdistance)
-				dot_bot.style.transform = t(botdistance)
-
-				div.classList.toggle("show-top-float", topdistance < 4)
-				div.classList.toggle("show-bottom-float", botdistance < 4)
-			}
-			
-			intersect(dot.getBoundingClientRect())
-			
-			const scroll_listener = throttled(() => {
-				intersect(dot.getBoundingClientRect())
-			}, 200)
-			
-			window.addEventListener("scroll", scroll_listener)
-
-			let observer = new IntersectionObserver((es) => {
-				const e = es[0]
-				intersect(e.boundingClientRect)
-			},  {
-			  rootMargin: '-4px',
-			  threshold: 1.0
-			});
-
-			observer.observe(dot)
-			invalidation.then(() => {
-				window.removeEventListener("scroll", scroll_listener)
-				observer.unobserve(dot)
-			})
-			
-			Array.from(div.querySelectorAll("pt-dot.floating")).forEach(e => {
-				e.addEventListener("click", () => dot.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"}))
-			})
-			
-			}
-			
-			</script>
-			<pt-dot></pt-dot>
-			<pt-dot class="floating top"></pt-dot>
-			<pt-dot class="floating bottom"></pt-dot>
-		
-			$(frames(SlottedDisplay.( call.steps)))
-		</div>
-		<style>
-		$(pluto_test_css.code)
-		$(slotted_code_css.code)
-		</style>
-		
-		
-		""")
-		Base.show(io, m, result)
-	end
-
-	md"""
-	```julia
-	function Base.show(io::IO, m::MIME"text/html", call::Union{WrongCall,CorrectCall,ErrorCall})
-	```
-	"""
-end
-
-# ╔═╡ a4a067b5-8b4b-4846-b986-0417d83cba48
-macro test(main_expr, expr...)
-	show_for_test_result_should_be_defined_before_test_macro
-	
-	source = QuoteNode(__source__)
-	orig_expr = QuoteNode(main_expr)
-	
-	quote
-		pluto_result, julia_test_result = try
-			result = $(test(main_expr, expr...))
-			(result, Test.Returned(result isa CorrectCall, "", $(source)))
-		catch err	
-			rethrow(err)
-			(err, Test.Threw(err, Base.catch_stack(), $(source)))
-		end
-
-		try
-			Test.do_test(julia_test_result, $(orig_expr))
-		catch; end
-		
-		pluto_result
-	end
-end
-
-# ╔═╡ 73d74146-8f60-4388-aaba-0dfe4215cb5d
-@skip_as_script @test sqrt(20-11) == 3
-
-# ╔═╡ 71b22e76-2b50-4d16-85f6-9dad0415630e
-@skip_as_script @test iseven(123 + 7^3)
-
-# ╔═╡ 6762ed72-f422-43a9-a782-de78f739c0ae
-@skip_as_script @test 4+4 ∈ [1:7...]
-
-# ╔═╡ f77275b9-90aa-4e07-a608-981b5df727af
-@skip_as_script @test is_good_boy(first(friends))
-
-# ╔═╡ 37529063-8ee9-46a6-85cc-94db292da541
-@skip_as_script @test sqrt(sqrt(16)) == sqrt(2)
-
-# ╔═╡ 89f78031-1c54-468b-9ab8-7410c51df10e
-export @test
-
-# ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e
-example_longer_fn_name =  @skip_as_script begin
-	@test Test.Pass(:symbol, 10, 10, 10) isa Test.Pass
-end
-
-# ╔═╡ 24f2eb92-5fd7-429b-b2ea-a987195c6edb
-example_cant_stepify_assignments = @skip_as_script let
-	@test @return_error(begin
-		@expand_at_runtime @test begin
-			x = 1 + 3
-			x
-		end
-	end).error isa CantStepifyThisYetException
-end
-
-# ╔═╡ bedc3586-6b85-4de2-9ea1-79d842db6b56
-example_cant_stepify_try_catch = @skip_as_script let
-	@test @return_error(begin
-		@expand_at_runtime @test try
-			0 / 0
-		catch error
-			"Oops"
-		end
-	end).error isa CantStepifyThisYetException
-end
-
-# ╔═╡ 42f34453-9935-4e50-a62b-9dcf31d72601
-example_cant_stepify_if_else = @skip_as_script let
-	@test @return_error(begin
-		@expand_at_runtime @test if 4 > 5
-			"Yeahhh"
-		else
-			"Nohhhh"
-		end
-	end).error isa CantStepifyThisYetException
-end
-
 # ╔═╡ Cell order:
 # ╟─ab02837b-79ec-40d7-bff1-c1d2dd7362ef
 # ╠═73d74146-8f60-4388-aaba-0dfe4215cb5d
@@ -1733,7 +1787,7 @@ end
 # ╠═78704300-0531-4f8e-8aa5-3f588fbdd190
 # ╠═9129342b-f560-4901-81a2-56e3f8641521
 # ╠═c763ed72-82c9-445c-a8f7-a0c40982e4d9
-# ╟─8a2e8348-49cf-4855-b5b3-cdee33e5ed67
+# ╠═8a2e8348-49cf-4855-b5b3-cdee33e5ed67
 # ╟─42671258-07a0-4015-8f47-4b3032595f08
 # ╟─0d70962a-3880-4dee-a439-35068d019f5a
 # ╠═113cc425-e224-4f77-bfbd-ef4eb1d1ed70
@@ -1747,7 +1801,7 @@ end
 # ╟─e1c306e3-0a47-4149-a9fb-ec7ab380fa11
 # ╠═b6e8a170-12cc-4d97-905d-274e2609bfd8
 # ╠═a4a067b5-8b4b-4846-b986-0417d83cba48
-# ╟─9c3f6eab-b1c3-4607-add8-d6d7e468c11a
+# ╠═9c3f6eab-b1c3-4607-add8-d6d7e468c11a
 # ╟─dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 # ╠═d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 # ╠═a6709e08-964d-46ea-9813-2c70a834824b
@@ -1825,14 +1879,14 @@ end
 # ╟─c6d5597c-d505-4125-88c4-10415934d2a4
 # ╟─872b4877-30dd-4a92-a3c8-69eb50675dcb
 # ╟─c877c109-db16-468c-8f3c-8294db859d6d
-# ╟─ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
+# ╠═ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
 # ╟─8480d0d7-bdf7-468d-9344-5b789e33921c
 # ╠═6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
-# ╟─b4b317d7-bed1-489c-9650-8d336e330689
+# ╠═b4b317d7-bed1-489c-9650-8d336e330689
 # ╠═93ed973f-daf6-408b-9d4b-d53495418610
 # ╠═dea898a0-1904-4d09-ad0b-6915008fe946
 # ╟─b5763c10-e11c-4389-b6fc-421d2c9682f1
-# ╟─74c19786-1ba7-4865-a993-590a779ae564
+# ╠═74c19786-1ba7-4865-a993-590a779ae564
 # ╠═e968fc57-d850-4e2d-9410-8777d03b7b3c
 # ╟─3d5abd58-02ab-4b91-a7a3-d9068d4df017
 # ╟─326f7661-3482-4bf2-a97b-57cc7ac60ee2

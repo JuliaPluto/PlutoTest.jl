@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.17.7
 
 using Markdown
 using InteractiveUtils
@@ -189,6 +189,9 @@ code_loweredish_with_lenses(x::Number) = ExprWithLens[]
 
 # ╔═╡ b155d336-f746-4c82-8206-ab1a49cedea8
 code_loweredish_with_lenses(x::String) = ExprWithLens[]
+
+# ╔═╡ f9b2a11d-8c4e-47a5-9d93-38025fae9a95
+code_loweredish_with_lenses(::Char) = ExprWithLens[]
 
 # ╔═╡ 221aa13b-aa25-4145-8076-da77432364bb
 code_loweredish_with_lenses(x::LineNumberNode) = ExprWithLens[]
@@ -1322,13 +1325,18 @@ pt-dot.floating.bottom {
 	font-size: 0.75rem;
 	white-space: normal;
 	padding: 4px;
-	
+
 	min-height: 25px;
 }
 
 
 .pluto-test.pass {
-	color: rgba(0,0,0,.5);
+	color: rgba(0., 0., 0., 0.5);
+}
+
+.pluto-test.pass pre-ish {
+	color: var(--pluto-output-color);
+	opacity: 50%;
 }
 
 .pluto-test.fail {
@@ -1733,7 +1741,7 @@ end
 # ╠═78704300-0531-4f8e-8aa5-3f588fbdd190
 # ╠═9129342b-f560-4901-81a2-56e3f8641521
 # ╠═c763ed72-82c9-445c-a8f7-a0c40982e4d9
-# ╟─8a2e8348-49cf-4855-b5b3-cdee33e5ed67
+# ╠═8a2e8348-49cf-4855-b5b3-cdee33e5ed67
 # ╟─42671258-07a0-4015-8f47-4b3032595f08
 # ╟─0d70962a-3880-4dee-a439-35068d019f5a
 # ╠═113cc425-e224-4f77-bfbd-ef4eb1d1ed70
@@ -1781,6 +1789,7 @@ end
 # ╟─fc000550-3053-483e-bc41-6aed22c3999c
 # ╟─3f11ca4c-dd06-47c9-92e2-cb97c18a06db
 # ╟─b155d336-f746-4c82-8206-ab1a49cedea8
+# ╟─f9b2a11d-8c4e-47a5-9d93-38025fae9a95
 # ╟─221aa13b-aa25-4145-8076-da77432364bb
 # ╟─2a514f2f-79c8-4b0d-be8a-170f3386d5d5
 # ╟─9fb4d52d-77f2-4032-a769-6d5e60be43bf

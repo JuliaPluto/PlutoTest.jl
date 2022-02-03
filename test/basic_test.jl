@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.17.7
 
 using Markdown
 using InteractiveUtils
@@ -62,6 +62,9 @@ x = [1,3]
 
 # ╔═╡ 5743b872-da02-4922-ae01-2e328a8cd3aa
 @test rand(50) == [rand(50),2]
+
+# ╔═╡ 83304f9e-def7-4b9c-af44-c2f8077743c2
+@test 'c' == only("c")
 
 # ╔═╡ 20639058-4c4c-4380-a22c-dc15c4259542
 macro test_that_throws(expr)
@@ -281,7 +284,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[Random]]
-deps = ["Serialization"]
+deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Reexport]]
@@ -347,6 +350,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═0114b7be-36ac-4bbe-b52c-9d54742c7c91
 # ╠═5743b872-da02-4922-ae01-2e328a8cd3aa
 # ╠═a82718bb-effa-4c93-9ef2-3985417e8820
+# ╠═83304f9e-def7-4b9c-af44-c2f8077743c2
 # ╠═20639058-4c4c-4380-a22c-dc15c4259542
 # ╠═182669e9-7dd0-44f7-957a-e7f461be2d8c
 # ╠═48bed8b7-374b-445e-a13b-ef291a7d0887

@@ -1331,12 +1331,15 @@ pt-dot.floating.bottom {
 
 
 .pluto-test.pass {
-	color: rgba(0., 0., 0., 0.5);
+	color: rgba(0, 0, 0, 0.5);
 }
 
-.pluto-test.pass pre-ish {
-	color: var(--pluto-output-color);
-	opacity: 50%;
+@media (prefers-color-scheme: dark) {
+	
+	.pluto-test.pass {
+		color: rgba(200, 200, 200, 0.5);
+	}
+
 }
 
 .pluto-test.fail {

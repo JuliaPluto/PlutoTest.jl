@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.17.2
 
 using Markdown
 using InteractiveUtils
@@ -1715,12 +1715,14 @@ export @test
 
 	@test 1+1 == 2
 
-	x = 3 + 3
+	x = 3 + 5
 
 	@test x == first(collect(6:9))
 
-	x -= 1
-	@test x == first(collect(6:9))
+	for i in 1:3
+		x -= 1
+		@test x == first(collect(6:9))
+	end
 end
 
 # ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e

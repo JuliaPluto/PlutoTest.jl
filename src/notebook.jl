@@ -1309,14 +1309,12 @@ pt-dot.floating.bottom {
 
 
 .pass > pt-dot.floating {
-
     animation: fadeout 2s;
 
 	animation-fill-mode: both;
 	animation-delay: 2s;
 
 	/*opacity: 0.4;*/
-	
 }
 
 
@@ -1335,11 +1333,9 @@ pt-dot.floating.bottom {
 }
 
 @media (prefers-color-scheme: dark) {
-	
 	.pluto-test.pass {
 		color: rgba(200, 200, 200, 0.5);
 	}
-
 }
 
 .pluto-test.fail {

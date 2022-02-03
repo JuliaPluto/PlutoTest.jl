@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.1
+# v0.17.2
 
 using Markdown
 using InteractiveUtils
@@ -89,6 +89,33 @@ end
 md"""
 # Test macro
 """
+
+# ╔═╡ 68e29042-3c0a-4e0e-80b8-f27e3166b5b1
+md"""
+# Testset
+"""
+
+# ╔═╡ bb4bba87-6c31-48af-9f63-28b47fcadc72
+const intermediate_tests = []
+
+# ╔═╡ 094c62e3-2936-4017-84e8-a9bfdf66832b
+const tracking_intermediate_tests = Ref(false)
+
+# ╔═╡ bf67a7a1-a9b3-44c0-9cbb-5fa09001d5b2
+macro testset(expr::Expr)
+
+
+	quote
+		empty!($(intermediate_tests))
+		$(tracking_intermediate_tests)[] = true
+		try
+			$(esc(expr))
+		finally
+			$(tracking_intermediate_tests)[] = false
+		end
+		$(intermediate_tests)
+	end
+end
 
 # ╔═╡ dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 md"""
@@ -1638,6 +1665,8 @@ end
 # ╔═╡ a4a067b5-8b4b-4846-b986-0417d83cba48
 macro test(main_expr, expr...)
 	show_for_test_result_should_be_defined_before_test_macro
+	tracking_intermediate_tests
+	intermediate_tests
 	
 	source = QuoteNode(__source__)
 	orig_expr = QuoteNode(main_expr)
@@ -1654,6 +1683,10 @@ macro test(main_expr, expr...)
 		try
 			Test.do_test(julia_test_result, $(orig_expr))
 		catch; end
+
+		if $(tracking_intermediate_tests)[]
+			push!($(intermediate_tests), pluto_result)
+		end
 		
 		pluto_result
 	end
@@ -1676,6 +1709,21 @@ end
 
 # ╔═╡ 89f78031-1c54-468b-9ab8-7410c51df10e
 export @test
+
+# ╔═╡ 7c8ac5c7-87db-44b8-8ac4-c7b291ff115e
+@testset begin
+
+	@test 1+1 == 2
+
+	x = 3 + 5
+
+	@test x == first(collect(6:9))
+
+	for i in 1:3
+		x -= 1
+		@test x == first(collect(6:9))
+	end
+end
 
 # ╔═╡ 97eb4444-a22c-47f2-9247-3bce6d7e179e
 example_longer_fn_name =  @skip_as_script begin
@@ -1748,6 +1796,11 @@ end
 # ╠═b6e8a170-12cc-4d97-905d-274e2609bfd8
 # ╠═a4a067b5-8b4b-4846-b986-0417d83cba48
 # ╟─9c3f6eab-b1c3-4607-add8-d6d7e468c11a
+# ╟─68e29042-3c0a-4e0e-80b8-f27e3166b5b1
+# ╠═bb4bba87-6c31-48af-9f63-28b47fcadc72
+# ╠═094c62e3-2936-4017-84e8-a9bfdf66832b
+# ╠═bf67a7a1-a9b3-44c0-9cbb-5fa09001d5b2
+# ╠═7c8ac5c7-87db-44b8-8ac4-c7b291ff115e
 # ╟─dbfbcc16-c740-436c-bbf0-fee16b0a20c5
 # ╠═d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 # ╠═a6709e08-964d-46ea-9813-2c70a834824b

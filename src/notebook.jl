@@ -1414,7 +1414,7 @@ p-frame-controls {
 """)
 
 # ╔═╡ e968fc57-d850-4e2d-9410-8777d03b7b3c
-function frames(fs::Vector, startframe = nothing)
+function frames(fs::Vector; startframe::Union{Nothing,Int}=nothing)
 	l = length(fs)
 	
 	startframe = if isnothing(startframe)
@@ -1623,7 +1623,10 @@ begin
 			<pt-dot class="floating top"></pt-dot>
 			<pt-dot class="floating bottom"></pt-dot>
 		
-			$(frames(SlottedDisplay.( call.steps)))
+			$(frames(
+				SlottedDisplay.( call.steps);
+				startframe=isa(call,Pass) ? 1 : nothing,
+			))
 		</div>
 		<style>
 		$(pluto_test_css.code)

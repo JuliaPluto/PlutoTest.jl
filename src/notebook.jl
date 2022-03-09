@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.7
+# v0.18.1
 
 using Markdown
 using InteractiveUtils
@@ -873,15 +873,16 @@ end;
 md"## Pretty printing code"
 
 # ╔═╡ dbd41240-9fc4-4e25-8b25-2b68afa679f2
-struct EscapeExpr
-	expr
-end
-
-# ╔═╡ 91e3e2b4-7966-42ee-8a45-31d6c5f08121
-function Base.show(io::IO, val::EscapeExpr)
-	print(io, "\$(esc(")
-	print(io, val.expr)
-	print(io, "))")
+begin
+	struct EscapeExpr
+		expr
+	end
+	function Base.show(io::IO, val::EscapeExpr)
+		print(io, "\$(esc(")
+		print(io, val.expr)
+		print(io, "))")
+	end
+	EscapeExpr
 end
 
 # ╔═╡ 7cc07d1b-7757-4428-8028-dc892bf05f2f
@@ -927,14 +928,48 @@ end
 # ╔═╡ dd495e00-d74d-47d4-a5d5-422fb147ec3b
 remove_linenums(x) = x
 
+# ╔═╡ e414c28a-8111-4821-ab25-21aff8289d26
+function remove_singleline_blocks(e::Expr)
+	if Meta.isexpr(e, :quote) || Meta.isexpr(e, :macrocall)
+		e
+	elseif Meta.isexpr(e, :block, 1)
+		remove_singleline_blocks(e.args[1])
+	else
+		Expr(
+			e.head, 
+			(remove_singleline_blocks(a) for a in e.args)...
+		)
+	end
+end
+
+# ╔═╡ c13e0f00-d3c4-4f1d-9531-84ed480c81f3
+remove_singleline_blocks(x) = x
+
+# ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+expr_to_str(e; mod=@__MODULE__(), context::IO=devnull) = let
+	Computed;
+	
+	printed = sprint() do io
+		
+		Base.print(
+			IOContext(IOContext(io, :module => mod), context), 
+			remove_singleline_blocks(escape_syntax_to_esc_call(move_escape_calls_up(remove_linenums(e))))
+		)
+	end
+	replace(printed, r"#= line 0 =# ?" => "")
+end
+
+# ╔═╡ 227129bc-4415-4240-ad55-815bde65a5a1
+function Base.showerror(io::IO, error::CantStepifyThisYetException)
+	print(io, "CantStepifyThisYetException: Can't make `$(expr_to_str(error.expr))` into separate steps yet")
+end
+
 # ╔═╡ ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
 function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
 
 	d, e = sd.d, sd.e
 	
-	s = sprint() do iobuffer
-		print(IOContext(iobuffer, io), e |> remove_linenums)
-	end
+	s = expr_to_str(e; context=io)
 	
 	lines = split(replace(s, r"#= line 0 =# ?" => ""), "\n")
 	
@@ -958,21 +993,6 @@ function Base.show(io::IO, m::MIME"text/html", sd::SlottedDisplay)
 	)
 		</slotted-code>""")
 	show(io, m, h)
-end
-
-# ╔═╡ b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
-expr_to_str(e, mod=@__MODULE__()) = let
-	Computed;
-	
-	printed = sprint() do io
-		Base.print(IOContext(io, :module => @__MODULE__), escape_syntax_to_esc_call(move_escape_calls_up(remove_linenums(e))))
-	end
-	replace(printed, r"#= line 0 =# ?" => "")
-end
-
-# ╔═╡ 227129bc-4415-4240-ad55-815bde65a5a1
-function Base.showerror(io::IO, error::CantStepifyThisYetException)
-	print(io, "CantStepifyThisYetException: Can't make `$(expr_to_str(error.expr))` into separate steps yet")
 end
 
 # ╔═╡ ef6fc423-f1b1-4dcb-a059-276121391bc6
@@ -1721,6 +1741,11 @@ example_cant_stepify_if_else = @skip_as_script let
 	end).error isa CantStepifyThisYetException
 end
 
+# ╔═╡ 1b869c21-b8cd-4aaa-91a9-370c1b7a3d32
+@skip_as_script @test quote
+	begin begin begin 123 end end end
+end |> remove_linenums |> remove_singleline_blocks === 123
+
 # ╔═╡ Cell order:
 # ╟─ab02837b-79ec-40d7-bff1-c1d2dd7362ef
 # ╠═73d74146-8f60-4388-aaba-0dfe4215cb5d
@@ -1740,7 +1765,7 @@ end
 # ╠═78704300-0531-4f8e-8aa5-3f588fbdd190
 # ╠═9129342b-f560-4901-81a2-56e3f8641521
 # ╠═c763ed72-82c9-445c-a8f7-a0c40982e4d9
-# ╠═8a2e8348-49cf-4855-b5b3-cdee33e5ed67
+# ╟─8a2e8348-49cf-4855-b5b3-cdee33e5ed67
 # ╟─42671258-07a0-4015-8f47-4b3032595f08
 # ╟─0d70962a-3880-4dee-a439-35068d019f5a
 # ╠═113cc425-e224-4f77-bfbd-ef4eb1d1ed70
@@ -1781,7 +1806,7 @@ end
 # ╠═17dea9e5-84ea-4476-a318-cc475043c83b
 # ╟─5e66e59b-fdb8-4373-b231-097b0227dc5c
 # ╠═c47252b9-8869-4878-b9bf-7eeb7ed17c9a
-# ╟─227129bc-4415-4240-ad55-815bde65a5a1
+# ╠═227129bc-4415-4240-ad55-815bde65a5a1
 # ╠═ce90612e-ffc1-4e30-9d89-531f11fd75eb
 # ╟─0a3f5c6c-6e1b-458c-bf91-523a0b639b41
 # ╟─43fe89d7-f33e-4dfa-853e-327e981feb1e
@@ -1798,7 +1823,7 @@ end
 # ╟─a29d5277-e97a-4cca-8e31-8037f9cfdd80
 # ╟─4f7aac13-9e49-4b2b-8d78-53f583f6130a
 # ╟─cc7102e1-6af0-43bb-8cf0-43e2cec210e3
-# ╠═f5d9a4c5-300f-4dae-8507-346ec0b74632
+# ╟─f5d9a4c5-300f-4dae-8507-346ec0b74632
 # ╟─ec6f1b07-d026-45ca-996d-be7693664cd7
 # ╟─dadf1c50-6588-4345-a240-69a72336c7cd
 # ╟─d384e3fc-b207-48ce-bc7b-1b47a14b1581
@@ -1871,15 +1896,17 @@ end
 # ╟─6c0156a9-7281-4326-9e1f-989efa73bb7b
 # ╟─8d3df0c0-eb48-4dae-97a8-8c01f0b0a34b
 # ╟─ef6fc423-f1b1-4dcb-a059-276121391bc6
-# ╠═b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+# ╟─b765dbfe-4e58-4bb9-b1d6-aa4378d4e9c9
+# ╟─1b869c21-b8cd-4aaa-91a9-370c1b7a3d32
 # ╟─dbd41240-9fc4-4e25-8b25-2b68afa679f2
-# ╟─91e3e2b4-7966-42ee-8a45-31d6c5f08121
 # ╟─7cc07d1b-7757-4428-8028-dc892bf05f2f
 # ╟─e0837338-e657-4bdc-ae91-1de9224da78d
 # ╟─64df4678-0721-4911-8289-fb18f55e6657
 # ╟─58845ff9-821b-45d4-b5ec-96e1949bb277
-# ╠═4d5f44e4-85e9-4985-9b76-73be5e097186
+# ╟─4d5f44e4-85e9-4985-9b76-73be5e097186
 # ╟─dd495e00-d74d-47d4-a5d5-422fb147ec3b
+# ╟─e414c28a-8111-4821-ab25-21aff8289d26
+# ╟─c13e0f00-d3c4-4f1d-9531-84ed480c81f3
 # ╟─7e6c2162-97e9-4835-b650-52c9723c327f
 # ╠═1ac164c8-88fc-4a87-a194-60ef616fb399
 # ╠═b0ab9327-8240-4d34-bdd9-3f8f5117bb29

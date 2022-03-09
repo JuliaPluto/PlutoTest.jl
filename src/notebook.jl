@@ -570,7 +570,10 @@ Marks a expression as Pluto-only, which means that it won't be executed when run
 macro skip_as_script(ex) is_inside_pluto(__module__) ? esc(ex) : nothing end
 
 # ╔═╡ fd8428a3-9fa3-471a-8b2d-5bbb8fdb3137
-@skip_as_script is_good_boy(x) = true;
+@skip_as_script begin
+	is_good_boy(x) = true
+	is_bad_boy(x) = false
+end
 
 # ╔═╡ d97987a0-bdc0-46ed-a6a5-f35c1ce961dc
 ex1 = @skip_as_script :(first([56,sqrt(9)]))
@@ -1701,6 +1704,9 @@ end
 # ╔═╡ f77275b9-90aa-4e07-a608-981b5df727af
 @skip_as_script @test is_good_boy(first(friends))
 
+# ╔═╡ de7e71e2-e5e9-4f05-a61d-658f01a3e937
+@skip_as_script @test is_bad_boy(first(friends))
+
 # ╔═╡ 37529063-8ee9-46a6-85cc-94db292da541
 @skip_as_script @test sqrt(sqrt(16)) == sqrt(2)
 
@@ -1755,6 +1761,7 @@ end |> remove_linenums |> remove_singleline_blocks === 123
 # ╠═71b22e76-2b50-4d16-85f6-9dad0415630e
 # ╠═6762ed72-f422-43a9-a782-de78f739c0ae
 # ╠═f77275b9-90aa-4e07-a608-981b5df727af
+# ╠═de7e71e2-e5e9-4f05-a61d-658f01a3e937
 # ╠═37529063-8ee9-46a6-85cc-94db292da541
 # ╟─56347b7e-5007-45f8-8f6d-8ac8cc719637
 # ╟─bf2abe01-6ae0-4066-8704-12f64e04511b
@@ -1861,7 +1868,7 @@ end |> remove_linenums |> remove_singleline_blocks === 123
 # ╟─c6d5597c-d505-4125-88c4-10415934d2a4
 # ╟─872b4877-30dd-4a92-a3c8-69eb50675dcb
 # ╟─c877c109-db16-468c-8f3c-8294db859d6d
-# ╟─ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
+# ╠═ab0a19b8-cf7c-4c4f-802a-f85eef81fc02
 # ╟─8480d0d7-bdf7-468d-9344-5b789e33921c
 # ╠═6f5ba692-4b6a-405a-8cd3-1a8f9cc06611
 # ╟─b4b317d7-bed1-489c-9650-8d336e330689

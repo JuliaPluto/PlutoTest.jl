@@ -1517,7 +1517,7 @@ macro visual_debug(expr)
 	var"@eval_step_by_step"
 	with_slotted_css
 	quote
-		@eval_step_by_step($(expr)) .|> SlottedDisplay |> frames |> with_slotted_css
+		$(esc(:(@eval_step_by_step($(expr))))) .|> SlottedDisplay |> frames |> with_slotted_css
 	end
 end
 

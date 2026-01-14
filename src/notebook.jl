@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.1
+# v0.19.22
 
 using Markdown
 using InteractiveUtils
@@ -501,7 +501,7 @@ function build_step_by_step_blocks(
 			catch error
 				captured_error = CapturedException(
 					error,
-					stacktrace(catch_backtrace())
+					catch_backtrace()
 				)
 				
 				$expr_ref_lens[] = $(deepcopy_expr)($expr_ref_lens[])

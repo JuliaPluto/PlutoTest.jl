@@ -1,7 +1,7 @@
 name = "PlutoTest"
 uuid = "cb4044da-4d16-4ffa-a6a3-8cad7f73ebdc"
 authors = ["Fons van der Plas <fons@plutojl.org>", "Michiel Dral <michiel@plutojl.org>"]
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
 HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
